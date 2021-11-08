@@ -12,7 +12,7 @@ object BackTest extends Tradable[BTMarket] with LazyLogging:
     State { case (BTMarket(capital, orders, positions, sequenceId, chart, count), memory) =>
     
       /* Order, Positionそれぞれについて削除・追加するものを取得する */
-      val (deleteOrders, newOrders, deletePositions, newPositions) = BackTestProcedure.checkAllContract(chart, orders, positions)
+      val (deleteOrders, newOrders, deletePositions, newPositions) = checkAllContract(chart, orders, positions)
       val nextOrders    = orders.diff(deleteOrders) ++ newOrders
       val nextPositions = positions.diff(deletePositions.map(_._1)) ++ newPositions
 
@@ -20,8 +20,12 @@ object BackTest extends Tradable[BTMarket] with LazyLogging:
       logger.trace(s"""${chart.datetime}: Orders    => ${nextOrders.mkString(",")}""")
       logger.trace(s"""${chart.datetime}: Positions => ${nextPositions.mkString(",")}""")
     
-      val next = BTMarket(capital, nextOrders, nextPositions, sequenceId, chart, count)
-      ((next, memory), BackTestProcedure.makeReport(deletePositions))
+      val pl = deletePositions.map { case (position, closePrice, _) =>
+        (position.side*(closePrice - position.price))*position.size
+      }.sum
+
+      val next = BTMarket(capital + pl, nextOrders, nextPositions, sequenceId, chart, count)
+      ((next, memory), makeReport(deletePositions))
     }
     
   override def getContext(market: BTMarket): MarketContext[BTMarket] = market match

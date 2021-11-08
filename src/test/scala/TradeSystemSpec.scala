@@ -14,17 +14,6 @@ import org.scalatestplus.scalacheck.{Checkers, ScalaCheckDrivenPropertyChecks}
 import java.time.LocalDateTime
 import com.typesafe.scalalogging.LazyLogging
 
-implicit lazy val arbChart: Arbitrary[Chart] = Arbitrary {
-  for {
-    high     <- Gen.posNum[Price]
-    low      <- Gen.choose[Price](0, high)
-    open     <- Gen.choose[Price](low, high)
-    close    <- Gen.choose[Price](low, high)
-    volume   <- Gen.posNum[Volume]
-    datetime <- Gen.choose[TimeStamp](LocalDateTime.MIN, LocalDateTime.MAX)
-  } yield Chart(open, high, low, close, volume, datetime)
-}
-
 class TradeSystemSpec 
   extends AnyFlatSpec
   with Configuration

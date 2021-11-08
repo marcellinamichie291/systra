@@ -18,24 +18,29 @@ object BTMarket extends LazyLogging:
 
   given MarketBehavior[BTMarket] with
     override def placeOrder(current: BTMarket, method: OrderMethod, size: Size, expire: TimeStamp): IO[(BTMarket, ID)] = IO {
-      val newOrders = BackTestProcedure.getOrders(current.chart, current.sequenceId, method, size, expire)
+      val newOrders = makeOrder(current.chart, current.sequenceId, method, size, expire)
+      val nextCapital = current.capital - newOrders.map {order => order.price*order.size}.sum
+      
+      /* 資金がマイナスなら例外 */
+      if nextCapital > 0 then throw new RuntimeException("Your Capital does not enough. So cannot place order")
+
       val next = current.copy(
-        orders = current.orders++newOrders,
+        capital    = nextCapital,
+        orders     = current.orders++newOrders,
         sequenceId = current.sequenceId + newOrders.size)
       (next, newOrders.head.id)
     }
 
     override def cancelOrder(current: BTMarket, id: ID): IO[(BTMarket, ExitCode)] = IO {
-      if (current.orders.exists(_.id == id)) {
+      if (current.orders.exists(_.id == id)) then
         val order = current.orders.find(_.id == id).get
         logger.trace(CANCEL, order)
         val next = current.copy(orders = current.orders.filterNot(_.id == id))
         (next, ExitCode.Success)
-
-      } else {
+      else
         logger.trace(CANCEL, s"Order($id) FAILURE. Maybe it has already closed or canceled.")
+        throw new RuntimeException("Cancel Failure.")
         (current, ExitCode.Error)
-      }
     }
 
     override def updateChart(current: BTMarket, chart: Chart): BTMarket = 

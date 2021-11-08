@@ -7,6 +7,7 @@ import com.github.imomushi8.systra.behavior._
 import com.github.imomushi8.systra.Actions._
 import com.github.imomushi8.systra.util._
 import com.github.imomushi8.systra.MarketContext._
+import cats.data.EitherT
 
 object MockBrain:
   case class Memory(chartList: List[Chart])
@@ -32,20 +33,20 @@ object MockBrain:
         val expire = chart.datetime.plusMonths(1)
 
         /** previousDay日前の値動きが上昇なら買い、下落なら売りでIFDOCO */
-        (if (isUp) for {
-           id <- context.placeOrder(MARKET(BUY), size, expire)
-           oco <- IO{ OCO(LIMIT(SELL, chart.close * 1.001, id), STOP(SELL, chart.close * 0.999, id)) }
-           _ <- context.placeOrder(oco, size, expire)
+        val test = (if (isUp) for {
+           id  <- context.placeOrder(MARKET(BUY), size, expire)
+           oco <- Actions.io{ OCO(LIMIT(SELL, chart.close * 1.001, id), STOP(SELL, chart.close * 0.999, id)) }
+           _   <- context.placeOrder(oco, size, expire)
          } yield ()
          else
            for {
-             id <- context.placeOrder(MARKET(SELL), size, expire)
-             oco <- IO{ OCO(LIMIT(BUY, chart.close * 0.999, id), STOP(BUY, chart.close * 1.001, id)) }
-             _ <- context.placeOrder(oco, size, expire)
-           } yield ()).unsafeRunSync()
+             id  <- context.placeOrder(MARKET(SELL), size, expire)
+             oco <- Actions.io{ OCO(LIMIT(BUY, chart.close * 0.999, id), STOP(BUY, chart.close * 1.001, id)) }
+             _   <- context.placeOrder(oco, size, expire)
+           } yield ()).value.unsafeRunAsync
 
       } else {
-        context.cancelOrder(context.orders.head.id).unsafeRunSync()
+        context.cancelOrder(context.orders.head.id).value.unsafeRunSync()
       }
 
       Actions.next(newMemory, context)

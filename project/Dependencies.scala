@@ -22,6 +22,7 @@ object Dependencies {
         "co.fs2"        %% "fs2-scodec"           % fs2Version,
         
         "com.github.gekomad" %% "itto-csv"        % "2.0.0",
+        "org.atnos"          %% "eff"             % "5.21.0",
         
         "ch.qos.logback"              %  "logback-classic"  % "1.2.6",
         "com.typesafe.scala-logging"  %% "scala-logging"    % "3.9.4",

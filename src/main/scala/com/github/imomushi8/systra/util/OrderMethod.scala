@@ -98,6 +98,3 @@ case class IFDOCO(parentMethod: ChildOrderMethod,
                   upperMethod: ChildOrderMethod,
                   lowerMethod: ChildOrderMethod) extends OrderMethod:
   override lazy val toString: String = s"IFDOCO($parentMethod, $upperMethod, $lowerMethod)"
-
-/** トレイル注文（特殊注文） */
-case class TRAIL() extends OrderMethod
