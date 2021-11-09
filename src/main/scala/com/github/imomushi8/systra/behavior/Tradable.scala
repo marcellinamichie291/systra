@@ -30,8 +30,10 @@ trait Tradable[Market](using MarketBehavior[Market]):
   private def action[Memory](chart: Chart, brain: Brain[Market, Memory]): State[(Market, Memory), Unit] =
     State.modify { case (market, memory) => brain(chart, getContext(market), memory) }
   
-  def trade[Memory](brain: Brain[Market, Memory])(chart: Chart): State[(Market, Memory), Seq[Report]] = for {
-    ?    <- updateChart(chart)
-    logs <- contract[Memory]
-    ?    <- action(chart, brain)
-  } yield logs
+  def trade[Memory](brain: Brain[Market, Memory])(chart: Chart): State[(Market, Memory), Seq[Report]] = 
+    for
+      ?    <- updateChart(chart)
+      logs <- contract[Memory]
+      ?    <- action(chart, brain)
+    yield 
+      logs
