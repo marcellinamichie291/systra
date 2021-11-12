@@ -30,4 +30,4 @@ extension [Market](context: MarketContext[Market])
     yield
       context.market = res._1
       res._2
-  ).attempt }
+    ).attempt }

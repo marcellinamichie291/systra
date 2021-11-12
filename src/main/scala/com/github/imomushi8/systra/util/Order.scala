@@ -50,13 +50,12 @@ case class Order(id               :ID,
     s"${ifdoco}Order($id, $sideStr, $methodStr, $priceStr$triggerPriceStr$size amount$settleStr)"
   }
 
+extension (order: Order)
   /** STOP_LIMIT -> LIMIT に変換するために使用 */
-  def invalidateTriggerPrice:Order =
-    Order(id,side, price, 0, size, expire, settlePositionId, parentId, brotherId)
+  def invalidateTriggerPrice: Order = order.copy(triggerPrice = 0)
+    //Order(id,side, price, 0, size, expire, settlePositionId, parentId, brotherId)
 
   /** IFD,IFDOCO注文を解除するために使用 */
-  def invalidateParentId:Order =
-    if(isSettle) // 約定先が存在すればそのまま流用
-      Order(id, side, price, triggerPrice, size, expire, settlePositionId, "", brotherId)
-    else // 約定先が設定されていなければparentIdを約定先に設定する
-      Order(id, side, price, triggerPrice, size, expire, parentId, "", brotherId)
+  def invalidateParentId: Order =
+    if order.isSettle then order.copy(parentId = Monoid[ID].empty) // 約定先が存在すればそのまま流用
+    else order.copy(settlePositionId = order.parentId, parentId = Monoid[ID].empty) // 約定先が設定されていなければparentIdを約定先に設定する

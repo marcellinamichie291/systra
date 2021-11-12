@@ -8,7 +8,7 @@ type Size = Double
 type Volume = Double
 type TimeStamp = LocalDateTime
 
-inline val START_MARKET = "Start Market"
+inline val START_MARKET  = "Start Market"
 inline val STOP_MARKET   = "Stop  Market"
 inline val OPEN          = "OPEN   {}"
 inline val CLOSE         = "CLOSE  {}"

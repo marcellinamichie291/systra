@@ -4,7 +4,7 @@ import cats.effect.{ExitCode, IO}
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.behavior.MarketBehavior
 import com.github.imomushi8.systra.util.{Chart, Order, OrderMethod, Position}
-import com.github.imomushi8.systra.{ID, Size, TimeStamp}
+import com.github.imomushi8.systra.report._
 import com.typesafe.scalalogging.LazyLogging
 
 case class BTMarket(capital     :Double,
@@ -21,6 +21,8 @@ object BTMarket extends LazyLogging:
       val newOrders = makeOrder(current.chart, current.sequenceId, method, size, expire)
       val nextCapital = current.capital - newOrders.map {order => order.price*order.size}.sum
       
+      logger.debug(ORDER, newOrders)
+      
       /* 資金がマイナスなら例外 */
       if nextCapital > 0 then throw new RuntimeException("Your Capital does not enough. So cannot place order")
 
@@ -32,16 +34,38 @@ object BTMarket extends LazyLogging:
     }
 
     override def cancelOrder(current: BTMarket, id: ID): IO[(BTMarket, ExitCode)] = IO {
-      if (current.orders.exists(_.id == id)) then
+      if current.orders.exists(_.id == id) then
         val order = current.orders.find(_.id == id).get
-        logger.trace(CANCEL, order)
+        logger.debug(CANCEL, order)
         val next = current.copy(orders = current.orders.filterNot(_.id == id))
         (next, ExitCode.Success)
       else
-        logger.trace(CANCEL, s"Order($id) FAILURE. Maybe it has already closed or canceled.")
+        logger.debug(CANCEL, s"Order($id) FAILURE. Maybe it has already closed or canceled.")
         throw new RuntimeException("Cancel Failure.")
         (current, ExitCode.Error)
     }
 
-    override def updateChart(current: BTMarket, chart: Chart): BTMarket = 
+    override def updateChart(current: BTMarket, chart: Chart): BTMarket =
+      logger.debug(GET, chart)
       current.copy(chart=chart, count=current.count+1)
+
+    override def checkContract(current: BTMarket): IO[(BTMarket, Seq[Report])] = IO { current match 
+      case BTMarket(capital, orders, positions, sequenceId, chart, count) =>
+        /* Order, Positionそれぞれについて削除・追加するものを取得する */
+        val (nextOrders, nextPositions, contractedPositions) = 
+          checkAllContract(chart, orders, positions)
+
+        logger.trace(s"""${chart.datetime}: Orders    => ${nextOrders.mkString(",")}""")
+        logger.trace(s"""${chart.datetime}: Positions => ${nextPositions.mkString(",")}""")
+      
+        val pl = contractedPositions.map { case (position, closePrice, _) =>
+          (position.side*(closePrice - position.price))*position.size
+        }.sum
+
+        val next = BTMarket(capital + pl, nextOrders, nextPositions, sequenceId, chart, count)
+        (next, makeReport(contractedPositions))
+    }
+
+    override def getContext(market: BTMarket): MarketContext[BTMarket] = market match
+      case BTMarket(capital, orders, positions, _, _, _) => 
+        MarketContext(capital, orders, positions, market)

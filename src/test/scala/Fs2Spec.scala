@@ -24,10 +24,11 @@ class Fs2Spec
   val initMarket: BTMarket = BTMarket(100, Nil, Nil, 1, null, 0)
   val initMemory: Memory = Monoid[Memory].empty
   val brain: Brain[BTMarket, Memory] = MockBrain(1)
-
+/*
   "In MockBrain, BackTest.run" should "success for all unit Stream" in forAll { (chart: Chart) =>
     val stream = Stream.emit[Pure, Chart](chart)
 
     val reportStream = BackTest(brain, (initMarket, initMemory)).run(stream)
     reportStream.toVector shouldBe Vector(Vector())
   }
+*/
