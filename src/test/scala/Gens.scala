@@ -4,8 +4,12 @@ import com.github.imomushi8.systra.util._
 import org.scalacheck.{Arbitrary, Gen}
 import java.time.LocalDateTime
 
+lazy val genHasEmptyId = Gen.frequency((1, ""), (1, Gen.posNum[Short].map(_.toString)))
+lazy val genHasEmptyPrice = Gen.frequency((1, Gen.const(0.0)), (1, Gen.posNum[Price]))
+
 lazy val genTimeStamp = Gen.choose[TimeStamp](LocalDateTime.MIN, LocalDateTime.MAX)
 lazy val genSide = Gen.oneOf[Side](BUY, SELL)
+lazy val genSize = Gen.posNum[Size]
 
 lazy val genChart: Gen[Chart] = 
   for
@@ -19,33 +23,33 @@ lazy val genChart: Gen[Chart] =
 
 lazy val genOrder: Gen[Order] = 
   for
-    id <- Gen.numStr
+    id <- Gen.choose[Short](0, Short.MaxValue) map (_.toString)
     side <- genSide
-    price <- Gen.posNum[Price]
-    triggerPrice <- Gen.posNum[Price]
-    size <- Gen.posNum[Size]
+    price <- genHasEmptyPrice
+    triggerPrice <- genHasEmptyPrice
+    size <- genSize
     expire <- genTimeStamp
-    settlePositionId <- Gen.numStr
-    parentId <- Gen.numStr
-    brotherId <- Gen.numStr
-    isMarket <- Arbitrary.arbitrary[Boolean]
-  yield Order(id, side, price, triggerPrice, size, expire, settlePositionId, parentId, brotherId, isMarket)
+    settlePositionId <- genHasEmptyId
+    parentId <- genHasEmptyId
+    brotherId <- genHasEmptyId
+  yield
+    Order(id, side, price, triggerPrice, size, expire, settlePositionId, parentId, brotherId)
 
 lazy val genPosition: Gen[Position] = 
   for
     openTime <- genTimeStamp
-    id <- Gen.numStr
+    id <- Gen.posNum[Int] map (_.toString)
     side <- genSide
     price <- Gen.posNum[Price]
-    size <- Gen.posNum[Size]
+    size <- genSize
   yield Position(openTime, id, side, price, size)
 
 lazy val genOrderMethod: Gen[OrderMethod] = 
   for
     side <- genSide
-    price <- Gen.frequency[Price]((10, Gen.const(0)),(1, Gen.posNum[Price]))
-    triggerPrice <- Gen.frequency[Price]((10, Gen.const(0)),(1, Gen.posNum[Price]))
-    positionId <- Gen.numStr
+    price <- genHasEmptyPrice
+    triggerPrice <- genHasEmptyPrice
+    positionId <- genHasEmptyId
   yield
     if price == 0 then
       if triggerPrice == 0 then
@@ -57,8 +61,3 @@ lazy val genOrderMethod: Gen[OrderMethod] =
         LIMIT(side, price, positionId)
       else
         STOP_LIMIT(side, price, triggerPrice, positionId)
-
-implicit lazy val arbChart: Arbitrary[Chart] = Arbitrary(genChart)
-implicit lazy val arbOrder: Arbitrary[Order] = Arbitrary(genOrder)
-implicit lazy val arbPosition: Arbitrary[Position] = Arbitrary(genPosition)
-implicit lazy val arbOrderMethod: Arbitrary[OrderMethod] = Arbitrary(genOrderMethod)

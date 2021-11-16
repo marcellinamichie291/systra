@@ -20,20 +20,19 @@ def makeOrder(chart  :Chart,
     case STOP      (side,        triggerPrice, positionId) => Order(childId, side,     0, triggerPrice, size, expire, positionId, parentId, brotherId)
     case STOP_LIMIT(side, price, triggerPrice, positionId) => Order(childId, side, price, triggerPrice, size, expire, positionId, parentId, brotherId)
 
-    method match
-      case MARKET(side, positionId) => List(
-        Order(id, side, chart.close, 0, size, expire, positionId, "", "", isMarket = true))
-      case OCO(upperMethod, lowerMethod) => List(
-        makeChildOrder(id    , upperMethod, "", id + 1),
-        makeChildOrder(id + 1, lowerMethod, "", id    ))
-      case IFD(parentMethod, childMethod) => List(
-        makeChildOrder(id    , parentMethod, "", ""),
-        makeChildOrder(id + 1,  childMethod, id, ""))
-      case IFDOCO(parentMethod, upperMethod, lowerMethod) => List(
-        makeChildOrder(id    , parentMethod, "",     ""),
-        makeChildOrder(id + 1,  upperMethod, id, id + 2),
-        makeChildOrder(id + 2,  lowerMethod, id, id + 1))
-      case method: ChildOrderMethod => List(
-        makeChildOrder(id, method, "", ""))
-      
+  method match
+    case MARKET(side, positionId) => List(
+      Order(id, side, chart.close, 0, size, expire, positionId, "", "", isMarket = true))
+    case OCO(upperMethod, lowerMethod) => List(
+      makeChildOrder(id    , upperMethod, "", id + 1),
+      makeChildOrder(id + 1, lowerMethod, "", id    ))
+    case IFD(parentMethod, childMethod) => List(
+      makeChildOrder(id    , parentMethod, "", ""),
+      makeChildOrder(id + 1,  childMethod, id, ""))
+    case IFDOCO(parentMethod, upperMethod, lowerMethod) => List(
+      makeChildOrder(id    , parentMethod, "",     ""),
+      makeChildOrder(id + 1,  upperMethod, id, id + 2),
+      makeChildOrder(id + 2,  lowerMethod, id, id + 1))
+    case method: ChildOrderMethod => List(
+      makeChildOrder(id, method, "", ""))
 }

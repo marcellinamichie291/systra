@@ -40,15 +40,16 @@ case class Order(id               :ID,
   /*------------------------------------------------------------------------------------------*/
   /* 実装メソッド */
 
-  override lazy val toString: String = {
-    val ifdoco = if(hasParent && hasBrother) "IFDOCO " else if(hasParent) "IFD " else if(hasBrother) "OCO " else ""
-    val methodStr = if(isMarket) "MARKET" else if(isLIMIT) if(isSTOP) "STOP_LIMIT" else "LIMIT" else "STOP"
-    val priceStr = if(isLIMIT) s"ordered: ${price}yen, " else ""
-    val triggerPriceStr = if(isSTOP) s"trigger: ${triggerPrice}yen, " else ""
-    val sideStr = if(isBUY) "BUY" else "SELL"
-    val settleStr = if(isSettle) s", settle Position ID: $settlePositionId" else ""
-    s"${ifdoco}Order($id, $sideStr, $methodStr, $priceStr$triggerPriceStr$size amount$settleStr)"
-  }
+  override lazy val toString: String =
+    val ifdoco = if hasParent && hasBrother then "IFDOCO " else if hasParent then "IFD " else if hasBrother then "OCO " else ""
+    val methodStr = if isMarket then "MARKET" else if isLIMIT then if isSTOP then "STOP_LIMIT" else "LIMIT" else "STOP"
+    val priceStr = if isLIMIT then f"ordered: $price%.3f yen, " else ""
+    val triggerPriceStr = if isSTOP then f"trigger: $triggerPrice%.3f yen, " else ""
+    val sideStr = if isBUY then "BUY" else "SELL"
+    val settleStr = if isSettle then s", settle Position ID: $settlePositionId" else ""
+    val parentStr = if hasParent then s", parent Position ID: $parentId" else ""
+    val brotherStr = if hasBrother then s", brother Position ID: $brotherId" else ""
+    f"${ifdoco}Order(ID: $id, $sideStr, $methodStr, $priceStr$triggerPriceStr$size%.3f amount$settleStr$parentStr$brotherStr)"
 
 extension (order: Order)
   /** STOP_LIMIT -> LIMIT に変換するために使用 */
