@@ -30,7 +30,7 @@ class BackTestContractSpec
   implicit lazy val arbOrderMethod: Arbitrary[OrderMethod] = Arbitrary(genOrderMethod)
 
   "checkAllContract(chart, orders, positions)" should "pass all tests for any arities" in forAll(genChart, Gen.listOf(genOrder), Gen.listOf(genPosition)) {
-      (chart: Chart, orders: List[Order], positions:List[Position]) =>
+    (chart: Chart, orders: List[Order], positions:List[Position]) =>
       val (nextOrder, nextPositions, closed) = checkAllContract(chart, orders, positions)
       for(order <- orders.filter(_.id.nonEmpty)) {
         if isContracted(chart)(order) then

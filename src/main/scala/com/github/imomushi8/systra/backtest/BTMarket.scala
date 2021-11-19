@@ -21,7 +21,7 @@ object BTMarket extends LazyLogging:
       val newOrders = makeOrder(current.chart, current.sequenceId, method, size, expire)
       val nextCapital = current.capital - newOrders.map {order => order.price*order.size}.sum
       
-      logger.debug(ORDER, newOrders)
+      //logger.debug(ORDER, newOrders)
       
       /* 資金がマイナスなら例外 */
       if nextCapital > 0 then throw new RuntimeException("Your Capital does not enough. So cannot place order")
@@ -36,11 +36,11 @@ object BTMarket extends LazyLogging:
     override def cancelOrder(current: BTMarket, id: ID): IO[(BTMarket, ExitCode)] = IO {
       if current.orders.exists(_.id == id) then
         val order = current.orders.find(_.id == id).get
-        logger.debug(CANCEL, order)
+        //logger.debug(CANCEL, order)
         val next = current.copy(orders = current.orders.filterNot(_.id == id))
         (next, ExitCode.Success)
       else
-        logger.debug(CANCEL, s"Order($id) FAILURE. Maybe it has already closed or canceled.")
+        //logger.debug(CANCEL, s"Order($id) FAILURE. Maybe it has already closed or canceled.")
         throw new RuntimeException("Cancel Failure.")
         (current, ExitCode.Error)
     }
@@ -55,10 +55,10 @@ object BTMarket extends LazyLogging:
         val (nextOrders, nextPositions, contractedPositions) = 
           checkAllContract(chart, orders, positions)
 
-        logger.trace(s"""${chart.datetime}: Orders    => ${nextOrders.mkString(",")}""")
-        logger.trace(s"""${chart.datetime}: Positions => ${nextPositions.mkString(",")}""")
+        //logger.trace(s"""${chart.datetime}: Orders    => ${nextOrders.mkString(",")}""")
+        //logger.trace(s"""${chart.datetime}: Positions => ${nextPositions.mkString(",")}""")
       
-        val pl = contractedPositions.map { case (position, closePrice, _) =>
+        val pl = contractedPositions.map { case (position, closePrice, _) => 
           (position.side*(closePrice - position.price))*position.size
         }.sum
 
