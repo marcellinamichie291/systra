@@ -46,24 +46,29 @@ object BTMarket extends LazyLogging:
     }
 
     override def updateChart(current: BTMarket, chart: Chart): BTMarket =
-      logger.debug(GET, chart)
+      //logger.debug(GET, chart)
+      //logger.debug(GET, current)
       current.copy(chart=chart, count=current.count+1)
 
     override def checkContract(current: BTMarket): IO[(BTMarket, Seq[Report])] = IO { current match 
       case BTMarket(capital, orders, positions, sequenceId, chart, count) =>
         /* Order, Positionそれぞれについて削除・追加するものを取得する */
-        val (nextOrders, nextPositions, contractedPositions) = 
-          checkAllContract(chart, orders, positions)
+        val (nextOrders, nextPositions, contractedPositions) = checkAllContract(chart, orders, positions)
 
-        //logger.trace(s"""${chart.datetime}: Orders    => ${nextOrders.mkString(",")}""")
-        //logger.trace(s"""${chart.datetime}: Positions => ${nextPositions.mkString(",")}""")
+        //logger.debug(s"""${chart.datetime}: Orders    => ${nextOrders.mkString(",")}""")
+        //logger.debug(s"""${chart.datetime}: Positions => ${nextPositions.mkString(",")}""")
       
         val pl = contractedPositions.map { case (position, closePrice, _) => 
           (position.side*(closePrice - position.price))*position.size
         }.sum
-
+        
         val next = BTMarket(capital + pl, nextOrders, nextPositions, sequenceId, chart, count)
-        (next, makeReport(contractedPositions))
+        val reports = makeReport(contractedPositions)
+        
+        println()
+        println(current)
+        println(reports)
+        (next, reports)
     }
 
     override def getContext(market: BTMarket): MarketContext[BTMarket] = market match

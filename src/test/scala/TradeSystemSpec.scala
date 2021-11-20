@@ -11,7 +11,6 @@ import org.atnos.eff.all._
 import org.atnos.eff.state._
 import org.atnos.eff.ErrorEffect._
 
-import MockBrain._
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.Actions.Brain
 import com.github.imomushi8.systra.backtest._
@@ -34,8 +33,9 @@ class TradeSystemSpec
   with Checkers:
 
   val initMarket: BTMarket = BTMarket(100, Nil, Nil, 1, null, 0)
-  val brain: Brain[BTMarket, Memory] = MockBrain(1)
 /*
+  val brain: Brain[BTMarket, Memory] = MockBrain(1)
+
   "In MockBrain, BackTest.trade" should "success once for all chart." in forAll { (chart: Chart) =>
     val (next, log) = BackTest.trade(brain)(chart)
     .run((initMarket, Monoid[Memory].empty)).value

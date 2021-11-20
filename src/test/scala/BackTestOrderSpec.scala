@@ -26,17 +26,17 @@ class BackTestOrderSpec
 
   lazy val genTradeInfo: Gen[(List[Chart], List[Order], List[Order], List[Order], List[Position])] = 
   for
-    charts <- Gen.nonEmptyListOf(genChart)
-    orders <- Gen.nonEmptyListOf(genOrder)
-    contractedOrders <- Gen.nonEmptyListOf(genContracted(charts.head, orders))
-    positions <- Gen.nonEmptyListOf(genOrderNonCoveredPosition(orders ++ contractedOrders))
-    settledOrders <- Gen.nonEmptyListOf(genSettle(charts.head, positions))
+    charts <- Gen.listOfN(3, genChart)
+    orders <- Gen.listOfN(2, genOrder)
+    contractedOrders <- Gen.listOfN(2, genContracted(charts.head, orders))
+    positions <- Gen.listOfN(2, genOrderNonCoveredPosition(orders ++ contractedOrders))
+    settledOrders <- Gen.listOfN(2, genSettle(charts.head, positions))
   yield
     (charts, contractedOrders >>= getNonContractedOrders(orders), contractedOrders, settledOrders, positions)
 
   val memory = Monoid[MockBrain.Memory].empty
   val brain = MockBrain[BTMarket](2)
-
+/*
   "checkAllContract(chart, orders, positions)" should "pass all tests for any arities" in forAll(genTradeInfo) {
     case (charts, nonContractedOrders, contractedOrders, settledOrders, positions) => 
       val orders = nonContractedOrders ++ contractedOrders ++ settledOrders
@@ -45,10 +45,13 @@ class BackTestOrderSpec
         val market = BTMarket(100000, orders, positions, seqId, charts.head, 0)
         val initEff = BackTest.put[BackTest.Stack[MockBrain.Memory], (BTMarket, MockBrain.Memory)]((market, memory))
         val trade = BackTest.trade(brain)
-        val stream = Stream(charts.tail*).fold(initEff){ case (effect, chart) => effect *> trade(chart) }
-        
-        stream.compile.drain
-        /*.last.foreach{
-            effect => BackTest.run(effect, (market, memory))
-        }*/
+        val stream = Stream(charts.tail*)//.fold(initEff){ case (effect, chart) => effect *> trade(chart) }
+
+        val effects = stream.compile.fold(initEff){ case (effect, chart) => effect *> trade(chart) }
+        val res = BackTest.run(effects, (market, memory))
+        res.foreach {
+          case ((_, state), reports) =>
+            println(reports.mkString("\n"))
+        }
   }
+  */
