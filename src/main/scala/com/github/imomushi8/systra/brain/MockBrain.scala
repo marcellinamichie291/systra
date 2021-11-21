@@ -2,8 +2,8 @@ package com.github.imomushi8.systra.brain
 
 import cats._
 import cats.data.{StateT}
+import cats.implicits.catsSyntaxFlatMapOps
 import cats.effect.IO
-import cats.effect.unsafe.implicits.global
 import cats.implicits.catsSyntaxOptionId
 
 import com.github.imomushi8.systra._
@@ -23,30 +23,29 @@ object MockBrain:
   def apply[Market](previousDay: Int)
                    (using MarketBehavior[Market]): Brain[Market, Memory] = Actions.receive {
     (chart, context, memory) =>
+
       val newMemory =
-        if (memory.chartList.size > previousDay + 1)
-          Memory(memory.chartList.takeRight(previousDay + 1) :+ chart)
+        if (memory.chartList.size > previousDay)
+          Memory(memory.chartList.takeRight(previousDay) :+ chart)
         else Memory(memory.chartList :+ chart)
 
-      val size = 10
+      val size = 1
       val expire = chart.datetime.plusMonths(1)
       
       if context.positions.nonEmpty then
-        /*
-        val orderProgram = (for {
-          id  <- context.placeOrder(MARKET(SELL, positionId = context.positions.head.id), size, expire)
-          //oco <- Actions.io{ OCO(LIMIT(SELL, chart.close * 1.001, id), STOP(SELL, chart.close * 0.999, id)) }
-          //_   <- context.placeOrder(oco, size, expire)
-        } yield ()).runF.unsafe.attempt
-         Actions.next(newMemory, context, orderProgram.some)
-         */
-        Actions.next(newMemory, context)
+        val ref = for
+          refMarket <- context.getMarket
+          id  <- refMarket.placeOrder(MARKET(SELL, positionId = context.positions.head.id), size, expire)
+          //oco <- IO { OCO(LIMIT(SELL, chart.close * 1.001, id), STOP(SELL, chart.close * 0.999, id)) }
+          //_   <- refMarket.placeOrder(oco, size, expire)
+        yield refMarket
+        Actions.nextHandleErrorWith(newMemory, context, ref)
       else
-        val orderProgram = context.placeOrder(LIMIT(BUY, 3), size, expire)
-        Actions.next(newMemory, context)
-
-
-
+        val ref = for
+          refMarket <- context.getMarket 
+          _ <- refMarket.placeOrder(LIMIT(BUY, 3), size, expire)
+        yield refMarket
+        Actions.nextHandleErrorWith(newMemory, context, ref)
 /*
       // ポジションがある場合のみ注文する
       if (context.positions.nonEmpty) {

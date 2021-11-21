@@ -53,14 +53,14 @@ class BackTestContractSpec
   "checkAllContract(chart, orders, positions)" should "pass all tests" in forAll(genMarketContext) {
     case (chart, nonContractedOrders, contractedOrders, settledOrders, positions) => 
       val orders = nonContractedOrders ++ contractedOrders ++ settledOrders
-      val (nextOrder, nextPositions, closed) = checkAllContract(chart, orders, positions)
+      val (nextOrders, nextPositions, closed) = checkAllContract(chart, orders, positions)
       
       for(order <- orders.filter(_.id.nonEmpty)) {
         if isContracted(chart)(order) then
-          nextOrder should not contain (order)
+          nextOrders should not contain (order)
 
           if isSTOP_LIMIT(order) then
-            nextOrder should contain (order.invalidateTriggerPrice)
+            nextOrders should contain (order.invalidateTriggerPrice)
           else
             if order.isSettle then
               nextPositions.map(_.id) should not contain (order.settlePositionId)
@@ -69,7 +69,7 @@ class BackTestContractSpec
               nextPositions should contain (createPosition(chart)(order))
 
         else
-          nextOrder should contain (order)
+          nextOrders should contain (order)
       }
   }
 

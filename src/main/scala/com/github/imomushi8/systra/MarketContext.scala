@@ -18,11 +18,20 @@ case class MarketContext[Market](capital   :Double,
                                  market    :Market)
                                  
 extension [Market](context: MarketContext[Market])
+  def getMarket: IO[Ref[IO, Market]] = Ref.of(context.market)
 
+extension [Market](refMarket: Ref[IO, Market])
   def placeOrder(method: OrderMethod, size: Size, expire: TimeStamp)
-                (using m: MarketBehavior[Market]): StateT[IO, Market, ID] =
-    StateT { (current: Market) => (current << (method, size, expire)) }
+                (using m: MarketBehavior[Market]): IO[ID] =
+    for
+      market <- refMarket.get 
+      res <- market << (method, size, expire)
+      _ <- refMarket.set(res._1)
+    yield res._2
 
-  def cancelOrder(id: ID)(using m: MarketBehavior[Market]): StateT[IO, Market, ExitCode] = StateT {
-    (current: Market) => (current >> id)
-  }
+  def cancelOrder(id: ID)(using m: MarketBehavior[Market]): IO[ExitCode] =
+    for
+      market <- refMarket.get 
+      res <- market >> (id)
+      _ <- refMarket.set(res._1)
+    yield res._2

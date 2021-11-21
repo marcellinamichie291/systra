@@ -1,4 +1,5 @@
 import com.github.imomushi8.systra._
+import com.github.imomushi8.systra.brain._
 import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.backtest.BTMarket._
 import com.github.imomushi8.systra.util._

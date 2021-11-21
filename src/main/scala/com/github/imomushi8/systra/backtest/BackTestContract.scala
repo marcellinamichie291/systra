@@ -8,12 +8,16 @@ import cats.implicits._
 
 def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Position], List[(Position, Price, TimeStamp)]) =
   val contractedOrders = orders filter (isContracted(chart))
+  val nonContractedOrders = orders diff contractedOrders
+
+  val nextOrders =
+    if contractedOrders.isEmpty then // 約定した注文がなければそのままOrderにしないといけない
+      nonContractedOrders
+    else 
+      contractedOrders >>= convertOrder(nonContractedOrders)
+
   val normalContractedOrders = contractedOrders filterNot (isSTOP_LIMIT)
-
-  val nextOrders = contractedOrders >>= convertOrder(orders.diff(contractedOrders))
-
   val closePositions = normalContractedOrders.filter(_.isSettle) >>= settle(chart, positions)
-  
   val openPositions  = normalContractedOrders.filterNot(_.isSettle) map (createPosition(chart))
   val nextPositions  = positions.diff(closePositions.map(_._1)) ++ openPositions
   (nextOrders, nextPositions, closePositions)

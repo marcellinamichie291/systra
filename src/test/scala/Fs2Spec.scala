@@ -1,4 +1,5 @@
 import com.github.imomushi8.systra._
+import com.github.imomushi8.systra.brain._
 import com.github.imomushi8.systra.Actions.Brain
 import com.github.imomushi8.systra.backtest.{BackTest, BTMarket}
 import com.github.imomushi8.systra.util.{Chart, Order, MARKET}
@@ -33,7 +34,8 @@ class Fs2Spec
     val ctx = initMarket.context
 
     (for {
-      id  <- ctx.placeOrder(MARKET(SELL), size, expire)
+      refMarket <- ctx.getMarket
+      id <- refMarket.placeOrder(MARKET(SELL), size, expire)
     } yield id)
     
     ctx.market should not equal (initMarket)
