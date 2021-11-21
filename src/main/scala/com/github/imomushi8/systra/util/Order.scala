@@ -40,23 +40,23 @@ case class Order(id               :ID,
   /*------------------------------------------------------------------------------------------*/
   /* 実装メソッド */
 
-  override lazy val toString: String = {
-    val ifdoco = if(hasParent && hasBrother) "IFDOCO " else if(hasParent) "IFD " else if(hasBrother) "OCO " else ""
-    val methodStr = if(isMarket) "MARKET" else if(isLIMIT) if(isSTOP) "STOP_LIMIT" else "LIMIT" else "STOP"
-    val priceStr = if(isLIMIT) s"ordered: ${price}yen, " else ""
-    val triggerPriceStr = if(isSTOP) s"trigger: ${triggerPrice}yen, " else ""
-    val sideStr = if(isBUY) "BUY" else "SELL"
-    val settleStr = if(isSettle) s", settle Position ID: $settlePositionId" else ""
-    s"${ifdoco}Order($id, $sideStr, $methodStr, $priceStr$triggerPriceStr$size amount$settleStr)"
-  }
+  override lazy val toString: String =
+    val ifdoco = if hasParent && hasBrother then "IFDOCO " else if hasParent then "IFD " else if hasBrother then "OCO " else ""
+    val methodStr = if isMarket then "MARKET" else if isLIMIT then if isSTOP then "STOP_LIMIT" else "LIMIT" else "STOP"
+    val priceStr = if isLIMIT then f"ordered: $price%.3f yen, " else ""
+    val triggerPriceStr = if isSTOP then f"trigger: $triggerPrice%.3f yen, " else ""
+    val sideStr = if isBUY then "BUY" else "SELL"
+    val settleStr = if isSettle then s", settle Position ID: $settlePositionId" else ""
+    val parentStr = if hasParent then s", parent Position ID: $parentId" else ""
+    val brotherStr = if hasBrother then s", brother Position ID: $brotherId" else ""
+    f"${ifdoco}Order(ID: $id, $sideStr, $methodStr, $priceStr$triggerPriceStr$size%.3f amount$settleStr$parentStr$brotherStr)"
 
+extension (order: Order)
   /** STOP_LIMIT -> LIMIT に変換するために使用 */
-  def invalidateTriggerPrice:Order =
-    Order(id,side, price, 0, size, expire, settlePositionId, parentId, brotherId)
+  def invalidateTriggerPrice: Order = order.copy(triggerPrice = 0)
+    //Order(id,side, price, 0, size, expire, settlePositionId, parentId, brotherId)
 
   /** IFD,IFDOCO注文を解除するために使用 */
-  def invalidateParentId:Order =
-    if(isSettle) // 約定先が存在すればそのまま流用
-      Order(id, side, price, triggerPrice, size, expire, settlePositionId, "", brotherId)
-    else // 約定先が設定されていなければparentIdを約定先に設定する
-      Order(id, side, price, triggerPrice, size, expire, parentId, "", brotherId)
+  def invalidateParentId: Order =
+    if order.isSettle then order.copy(parentId = Monoid[ID].empty) // 約定先が存在すればそのまま流用
+    else order.copy(settlePositionId = order.parentId, parentId = Monoid[ID].empty) // 約定先が設定されていなければparentIdを約定先に設定する

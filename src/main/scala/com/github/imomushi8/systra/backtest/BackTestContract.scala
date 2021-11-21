@@ -4,57 +4,68 @@ import com.github.imomushi8.systra.{Price, ID, Size, TimeStamp}
 import com.github.imomushi8.systra.util._
 import com.github.imomushi8.systra.report.{Report, PositionReport}
 
-def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Order], List[(Position, Price, TimeStamp)], List[Position]) =
-  /* 削除：子注文を除き、約定のイベントが発生している注文 */
-  val contractedOrders = orders.filterNot(_.hasParent).filter(isContracted(chart))
-  /* 追加：約定済のSTOP_LIMIT注文を、LIMIT注文に変換した注文 */
-  val newLimitOrders = contractedOrders.filter(order => order.isSTOP && order.isLIMIT).map(_.invalidateTriggerPrice)
-  /* 約定済のLIMITまたはSTOP注文の注文 */
-  val normalContractedOrders = contractedOrders.filterNot(order => order.isSTOP && order.isLIMIT)
-  /* 削除：約定しているLIMIT,STOP注文のうち、OCO注文と紐づいている注文 */
-  val ocoOrders = normalContractedOrders.flatMap { contractedOrder => orders.filter(_.id == contractedOrder.brotherId) }
-  /* 削除：約定しているLIMIT,STOP注文のうち、IFD注文と紐づいている注文 */
-  val oldIfdOrders = normalContractedOrders.flatMap { contractedOrder => orders.filter(_.parentId == contractedOrder.id) }
-  /* 追加：IFD注文と紐づいているもので、parentIdを無効化した注文 */
-  val newIfdOrders = oldIfdOrders.map(_.invalidateParentId)
-  /* 追加：約定によって開いたポジション */
-  val openPositions = normalContractedOrders.filterNot(_.isSettle).map(createPosition(chart))
-  /* 削除：約定によって閉じたポジション */
-  val closePositions = normalContractedOrders.filter(_.isSettle).flatMap(settle(chart, positions))
+import cats.implicits._
 
-  val deleteOrders = contractedOrders ++ (ocoOrders ++ oldIfdOrders)
-  val newOrders = newLimitOrders ++ newIfdOrders
-  val deletePositions = closePositions
-  val newPositions = openPositions
+def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Position], List[(Position, Price, TimeStamp)]) =
+  val contractedOrders = orders filter (isContracted(chart))
+  val nonContractedOrders = orders diff contractedOrders
 
-  (deleteOrders, newOrders, deletePositions, newPositions)
+  val nextOrders =
+    if contractedOrders.isEmpty then // 約定した注文がなければそのままOrderにしないといけない
+      nonContractedOrders
+    else 
+      contractedOrders >>= convertOrder(nonContractedOrders)
 
-/** ポジションを作る */
-def createPosition(chart: Chart)(contractOrder: Order): Position =
-  val validPrice = if contractOrder.isLIMIT then contractOrder.price else contractOrder.triggerPrice
-  Position(chart.datetime, contractOrder.id, contractOrder.side, validPrice, contractOrder.size)
+  val normalContractedOrders = contractedOrders filterNot (isSTOP_LIMIT)
+  val closePositions = normalContractedOrders.filter(_.isSettle) >>= settle(chart, positions)
+  val openPositions  = normalContractedOrders.filterNot(_.isSettle) map (createPosition(chart))
+  val nextPositions  = positions.diff(closePositions.map(_._1)) ++ openPositions
+  (nextOrders, nextPositions, closePositions)
 
-/** ポジションを決済する */
-def settle(chart: Chart, positions: List[Position])(contractOrder: Order): List[(Position, Size, TimeStamp)] =
-  val validPrice = if contractOrder.price > 0 then contractOrder.price else contractOrder.triggerPrice
-  positions.filter(_.id == contractOrder.settlePositionId).map((_, validPrice, chart.datetime))
+/** STOP_LIMIT注文かどうかを判定 */
+def isSTOP_LIMIT(order: Order) = order.isSTOP && order.isLIMIT
 
-/** 約定しているかどうか TODO: 見直し（特に高値・安値の部分の反転は正しいか？） */
-def isContracted(chart: Chart)(order: Order): Boolean =
-  val contracted =
-    if order.isSTOP then /* STOP, STOP_LIMITが約定している判定を先に行う */
-      order.side * chart.low >= order.side * order.triggerPrice
-    else /* LIMIT */
-      order.side * chart.high <= order.side * order.price
+/* STOP, STOP_LIMITが約定している判定を先に行う */
+def hasContractEvent(chart: Chart, order: Order): Boolean =
+  if order.isSTOP then 
+    val thresPrice = if order.isBUY then chart.high else chart.low
+    order.side * thresPrice > order.side * order.triggerPrice
+  else 
+    val thresPrice = if order.isBUY then chart.low else chart.high
+    order.side * thresPrice < order.side * order.price
 
-  order.isMarket || contracted
+/** 
+ * 約定しているかどうかの判定 
+ * 親注文を持っていない　かつ（成り行き注文　または　約定イベントが発生している注文）
+ */
+def isContracted(chart: Chart)(order: Order): Boolean = 
+  !order.hasParent && (order.isMarket || hasContractEvent(chart, order))
 
-def makeReport(contractedPositions: List[(Position, Price, TimeStamp)]): Vector[Report] =
-  contractedPositions.map { case (position, closePrice, closeTime) =>
-    PositionReport(position.openTime,
-                   closeTime,
-                   position.side,
-                   position.size,
-                   position.price,
-                   closePrice,
-                   0)}.toVector
+/** 約定注文を用いて、未約定注文リストから関係のあるものを追加・変換・削除 */
+def convertOrder(nonContractedOrders: List[Order])(contractedOrder: Order): List[Order] =
+  if isSTOP_LIMIT(contractedOrder) then 
+    List(contractedOrder.invalidateTriggerPrice) // STOP_LIMIT注文はLIMIT注文に変換
+  else
+    nonContractedOrders.flatMap { nonContractedOrder =>    
+      if contractedOrder.id == nonContractedOrder.parentId then List(nonContractedOrder.invalidateParentId) // IFD注文なら親注文IDを削除したものに変換
+      else if contractedOrder.id == nonContractedOrder.brotherId then Nil // OCO注文なら片方を削除
+      else List(nonContractedOrder) // 関係ないものはそのまま
+    }
+
+/** ポジションを作る TODO: 成り行き注文の分岐を追加 */
+def createPosition(chart: Chart)(contractedOrder: Order): Position =
+  val validPrice = if contractedOrder.isLIMIT then contractedOrder.price else contractedOrder.triggerPrice
+  Position(chart.datetime, contractedOrder.id, contractedOrder.side, validPrice, contractedOrder.size)
+
+/** ポジションを決済する TODO: 成り行き注文の分岐を追加 */
+def settle(chart: Chart, positions: List[Position])(contractedOrder: Order): List[(Position, Price, TimeStamp)] =
+  val validPrice = if contractedOrder.price > 0 then contractedOrder.price else contractedOrder.triggerPrice
+  positions.collect {
+    case position if position.id == contractedOrder.settlePositionId => (position, validPrice, chart.datetime)
+  }
+
+/** 決済済みポジションからPositionReportを作成 */
+def makeReport(contractedPositions: List[(Position, Price, TimeStamp)]): Vector[Report] = contractedPositions.map { 
+  case (Position(openTime, id, side, price, size), closePrice, closeTime) =>
+    PositionReport(openTime, closeTime, side, size, price, closePrice, 0)
+}.toVector

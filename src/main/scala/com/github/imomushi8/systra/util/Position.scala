@@ -20,6 +20,6 @@ case class  Position(openTime :TimeStamp,
                      size     :Size) {
   override val toString: String = {
     val sideStr = if(side>0) "BUY" else "SELL"
-    s"Position($sideStr, ${price}yen, $size amount, ID: $id)"
+    f"Position($sideStr, $price%.3f yen, $size%.3f amount, ID: $id)"
   }
 }
