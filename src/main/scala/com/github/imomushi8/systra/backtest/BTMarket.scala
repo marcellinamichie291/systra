@@ -2,9 +2,9 @@ package com.github.imomushi8.systra.backtest
 
 import cats.effect.{ExitCode, IO}
 import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.behavior.MarketBehavior
 import com.github.imomushi8.systra.util.{Chart, Order, OrderMethod, Position}
 import com.github.imomushi8.systra.report._
+import com.github.imomushi8.systra.behavior.MarketBehavior
 import com.typesafe.scalalogging.LazyLogging
 
 case class BTMarket(capital     :Double,
@@ -72,17 +72,19 @@ object BTMarket extends LazyLogging:
     override def checkContract(current: BTMarket): IO[(BTMarket, Seq[Report])] = current match 
       case BTMarket(capital, orders, positions, sequenceId, chart, count) =>
         IO {
-          /* TODO: ここでorderのexpireとchartの時刻を比較して、有効期限切れの注文があった場合は削除する処理を入れる*/
+          /* 有効期限切れの注文があった場合は削除する */
+          val nonExpiredOrders = orders filter { order => (order.expire compareTo chart.datetime) < 0 }
 
           /* Order, Positionそれぞれについて削除・追加するものを取得する */
-          val (nextOrders, nextPositions, contractedPositions) = checkAllContract(chart, orders, positions)
+          val (nextOrders, nextPositions, reports) = checkAllContract(chart, nonExpiredOrders, positions)
         
-          val pl = contractedPositions.map { case (position, closePrice, _) => 
-            (position.side*(closePrice - position.price))*position.size
+          val pl = reports map { 
+            case PositionReport(_, _, side, size, openPrice, closePrice, cost) => 
+              (side*(closePrice - openPrice))*size + cost
+            case _ => 0 // ありえないが、exhaustが必須のため
           }.sum
           
           val next = BTMarket(capital + pl, nextOrders, nextPositions, sequenceId, chart, count)
-          val reports = makeReport(contractedPositions)
           logger.debug(NEXT_STATE, "Check Contract", next)
           (next, reports)
         }
