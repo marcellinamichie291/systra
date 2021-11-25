@@ -6,8 +6,8 @@ import com.github.imomushi8.systra.report.{Report, PositionReport}
 
 import cats.implicits._
 
-def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Position], List[(Position, Price, TimeStamp)]) =
-  val contractedOrders = orders filter (isContracted(chart))
+def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Position], Vector[Report]) =
+  val contractedOrders = orders filter isContracted(chart)
   val nonContractedOrders = orders diff contractedOrders
 
   val nextOrders =
@@ -16,11 +16,11 @@ def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position
     else 
       contractedOrders >>= convertOrder(nonContractedOrders)
 
-  val normalContractedOrders = contractedOrders filterNot (isSTOP_LIMIT)
+  val normalContractedOrders = contractedOrders filterNot isSTOP_LIMIT
   val closePositions = normalContractedOrders.filter(_.isSettle) >>= settle(chart, positions)
   val openPositions  = normalContractedOrders.filterNot(_.isSettle) map (createPosition(chart))
   val nextPositions  = positions.diff(closePositions.map(_._1)) ++ openPositions
-  (nextOrders, nextPositions, closePositions)
+  (nextOrders, nextPositions, makeReport(closePositions))
 
 /** STOP_LIMIT注文かどうかを判定 */
 def isSTOP_LIMIT(order: Order) = order.isSTOP && order.isLIMIT
