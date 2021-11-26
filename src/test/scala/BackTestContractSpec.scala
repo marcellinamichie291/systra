@@ -29,50 +29,6 @@ class BackTestContractSpec
   implicit lazy val arbPosition: Arbitrary[Position] = Arbitrary(genPosition)
   implicit lazy val arbOrderMethod: Arbitrary[OrderMethod] = Arbitrary(genOrderMethod)
 
-  "checkAllContract(chart, orders, positions)" should "pass all tests for any arities" in forAll(genChart, Gen.listOf(genOrder), Gen.listOf(genPosition)) {
-    (chart: Chart, orders: List[Order], positions:List[Position]) =>
-      val (nextOrder, nextPositions, closed) = checkAllContract(chart, orders, positions)
-      for(order <- orders.filter(_.id.nonEmpty)) {
-        if isContracted(chart)(order) then
-          nextOrder should not contain (order)
-
-          if isSTOP_LIMIT(order) then
-            nextOrder should contain (order.invalidateTriggerPrice)
-          else
-            if order.isSettle then
-              nextPositions.map(_.id) should not contain (order.settlePositionId)
-              closed should contain allElementsOf (settle(chart, positions)(order))
-            else 
-              nextPositions should contain (createPosition(chart)(order))
-
-        else
-          nextOrder should contain (order)
-      }
-    }
-
-  "checkAllContract(chart, orders, positions)" should "pass all tests" in forAll(genMarketContext) {
-    case (chart, nonContractedOrders, contractedOrders, settledOrders, positions) => 
-      val orders = nonContractedOrders ++ contractedOrders ++ settledOrders
-      val (nextOrders, nextPositions, closed) = checkAllContract(chart, orders, positions)
-      
-      for(order <- orders.filter(_.id.nonEmpty)) {
-        if isContracted(chart)(order) then
-          nextOrders should not contain (order)
-
-          if isSTOP_LIMIT(order) then
-            nextOrders should contain (order.invalidateTriggerPrice)
-          else
-            if order.isSettle then
-              nextPositions.map(_.id) should not contain (order.settlePositionId)
-              closed should contain allElementsOf (settle(chart, positions)(order))
-            else 
-              nextPositions should contain (createPosition(chart)(order))
-
-        else
-          nextOrders should contain (order)
-      }
-  }
-
   "isSTOP_LIMIT(order)" should "pass all tests" in forAll { (order: Order) =>
     isSTOP_LIMIT(order) should equal (order.price > 0 && order.triggerPrice > 0)
   }
@@ -106,29 +62,6 @@ class BackTestContractSpec
     val contractFlag = isContracted(chart)(order)
     
     contractFlag should equal (order.parentId == "" && (hasEvent || order.isMarket))
-  }
-
-  "convertOrder(nonContractedOrders)(contractedOrder)" should "pass all tests" in {
-    forAll(genChart, Gen.listOf(genOrder)) { (chart: Chart, orders: List[Order]) =>
-      forAll(genContracted(chart, orders)) { (contractedOrder: Order) =>
-        if contractedOrder.id.nonEmpty then
-          val nonContractedOrders = getNonContractedOrders(orders)(contractedOrder) 
-
-          val convertOrders = convertOrder(nonContractedOrders)(contractedOrder)
-            
-          if isSTOP_LIMIT(contractedOrder) then
-            convertOrders should contain (contractedOrder.invalidateTriggerPrice)
-          else
-            convertOrders should not contain (contractedOrder)
-            if nonContractedOrders.exists(_.parentId == contractedOrder.id) then
-              val filteredOrders = nonContractedOrders.filter(_.parentId == contractedOrder.id).map(_.invalidateParentId)
-              convertOrders should contain allElementsOf (filteredOrders)
-            
-            if nonContractedOrders.exists(_.brotherId == contractedOrder.id) then
-              val filteredOrders = nonContractedOrders.filter(_.brotherId == contractedOrder.id)
-              convertOrders should not contain allElementsOf (filteredOrders)
-      }
-    }
   }
 
 /*************************************************************************************************/

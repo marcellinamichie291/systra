@@ -31,7 +31,7 @@ object MockBrain:
 
       val size = 1
       val expire = chart.datetime.plusMonths(1)
-      
+      /*
       if context.positions.nonEmpty then
         val ref = for
           refMarket <- context.getMarket
@@ -46,6 +46,8 @@ object MockBrain:
           _ <- refMarket.placeOrder(LIMIT(BUY, 3), size, expire)
         yield refMarket
         Actions.nextHandleErrorWith(newMemory, context, ref)
+      */
+      Actions.next(newMemory, context)
 /*
       // ポジションがある場合のみ注文する
       if (context.positions.nonEmpty) {

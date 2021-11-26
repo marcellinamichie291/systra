@@ -9,12 +9,7 @@ import cats.implicits._
 def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Position], Vector[Report]) =
   val contractedOrders = orders filter isContracted(chart)
   val nonContractedOrders = orders diff contractedOrders
-
-  val nextOrders =
-    if contractedOrders.isEmpty then // 約定した注文がなければそのままOrderにしないといけない
-      nonContractedOrders
-    else 
-      contractedOrders >>= convertOrder(nonContractedOrders)
+  val nextOrders = getNextOrders(contractedOrders)(nonContractedOrders)
 
   val normalContractedOrders = contractedOrders filterNot isSTOP_LIMIT
   val closePositions = normalContractedOrders.filter(_.isSettle) >>= settle(chart, positions)
@@ -23,7 +18,7 @@ def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position
   (nextOrders, nextPositions, makeReport(closePositions))
 
 /** STOP_LIMIT注文かどうかを判定 */
-def isSTOP_LIMIT(order: Order) = order.isSTOP && order.isLIMIT
+def isSTOP_LIMIT(order: Order): Boolean = order.isSTOP && order.isLIMIT
 
 /* STOP, STOP_LIMITが約定している判定を先に行う */
 def hasContractEvent(chart: Chart, order: Order): Boolean =
@@ -40,24 +35,40 @@ def hasContractEvent(chart: Chart, order: Order): Boolean =
  */
 def isContracted(chart: Chart)(order: Order): Boolean = 
   !order.hasParent && (order.isMarket || hasContractEvent(chart, order))
+  
+/** 約定注文と関連するものを取得する */
+def getRelated(nonContractedOrders: List[Order])(contractedOrder: Order): List[Order] = 
+  nonContractedOrders filter { nonContractedOrder =>
+    contractedOrder.id == nonContractedOrder.parentId || contractedOrder.id == nonContractedOrder.brotherId
+  }
 
-/** 約定注文を用いて、未約定注文リストから関係のあるものを追加・変換・削除 */
-def convertOrder(nonContractedOrders: List[Order])(contractedOrder: Order): List[Order] =
-  if isSTOP_LIMIT(contractedOrder) then 
-    List(contractedOrder.invalidateTriggerPrice) // STOP_LIMIT注文はLIMIT注文に変換
+/** 約定注文とその関連注文を変換する */
+def convertOrders(relatedOrders: List[Order])(contractedOrder: Order): List[Order] =
+  // STOP_LIMIT注文はLIMIT注文に変換
+  if isSTOP_LIMIT(contractedOrder) then
+    List(contractedOrder.invalidateTriggerPrice) 
+  // 残りは関連する注文に変換
   else
-    nonContractedOrders.flatMap { nonContractedOrder =>    
-      if contractedOrder.id == nonContractedOrder.parentId then List(nonContractedOrder.invalidateParentId) // IFD注文なら親注文IDを削除したものに変換
-      else if contractedOrder.id == nonContractedOrder.brotherId then Nil // OCO注文なら片方を削除
-      else List(nonContractedOrder) // 関係ないものはそのまま
+    relatedOrders collect {
+      // IFD注文なら親注文IDを削除したものに変換
+      case relatedOrder if contractedOrder.id == relatedOrder.parentId => relatedOrder.invalidateParentId 
+      //OCO注文は削除
     }
+
+/** 次の注文を取得する */
+def getNextOrders(contractedOrders: List[Order])(nonContractedOrders: List[Order]): List[Order] = 
+  val relatedOrders    = (contractedOrders flatMap getRelated(nonContractedOrders)).distinct // 関連注文は2重に取得できる可能性があるので、distinctを使用
+  val convertedOrders  = contractedOrders flatMap convertOrders(relatedOrders)
+  val nonRelatedOrders = nonContractedOrders diff relatedOrders
+  convertedOrders ++ nonRelatedOrders
+
 
 /** ポジションを作る TODO: 成り行き注文の分岐を追加 */
 def createPosition(chart: Chart)(contractedOrder: Order): Position =
   val validPrice = if contractedOrder.isLIMIT then contractedOrder.price else contractedOrder.triggerPrice
   Position(chart.datetime, contractedOrder.id, contractedOrder.side, validPrice, contractedOrder.size)
 
-/** ポジションを決済する TODO: 成り行き注文の分岐を追加 */
+/** ポジションを決済する FIXME: 約定判定が甘い。とくに、存在していないIDに対する決済処理はエラーにするべき */
 def settle(chart: Chart, positions: List[Position])(contractedOrder: Order): List[(Position, Price, TimeStamp)] =
   val validPrice = if contractedOrder.price > 0 then contractedOrder.price else contractedOrder.triggerPrice
   positions.collect {

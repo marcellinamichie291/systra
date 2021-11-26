@@ -17,7 +17,7 @@ trait MarketBehavior[Market]:
   def updateChart(current: Market,
                   chart: Chart): Market
 
-  def checkContract(current: Market): IO[(Market, Seq[Report])]
+  def checkContract(current: Market): IO[(Market, Vector[Report])]
 
   def getContext(market: Market): MarketContext[Market]
 
