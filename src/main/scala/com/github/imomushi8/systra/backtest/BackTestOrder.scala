@@ -3,6 +3,10 @@ package com.github.imomushi8.systra.backtest
 import com.github.imomushi8.systra.{Price, ID, Size, TimeStamp}
 import com.github.imomushi8.systra.util._
 
+/**
+ * 発注処理を行う
+ * TODO: 理論的に不可能な注文をはじくように実装する
+ */
 def makeOrder(chart  :Chart,
               id     :Int, 
               method :OrderMethod, 
