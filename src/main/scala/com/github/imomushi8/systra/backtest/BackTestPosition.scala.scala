@@ -11,12 +11,9 @@ def createPosition(chart: Chart)(contractedOrder: Order): Position =
   val validPrice = if contractedOrder.isLIMIT then contractedOrder.price else contractedOrder.triggerPrice
   Position(chart.datetime, contractedOrder.id, contractedOrder.side, validPrice, contractedOrder.size)
 
-/** 
- * ポジションを決済する
- * FIXME: 約定判定が甘い。とくに、存在していないIDに対する決済処理はエラーにするべき。
- * TODO: ポジションのすべてを閉じるのではなく、sizeの差分だけ決済する処理が欲しい
- */
+/** ポジションを決済する */
 def settle(chart: Chart, positions: List[Position])(contractedOrder: Order): List[(Position, Price, TimeStamp)] =
+  checkSettlePositionId(positions)(contractedOrder.settlePositionId) // settlePositionIdが存在するかチェック
   val validPrice = if contractedOrder.price > 0 then contractedOrder.price else contractedOrder.triggerPrice
   positions.collect {
     case position if position.id == contractedOrder.settlePositionId => (position, validPrice, chart.datetime)

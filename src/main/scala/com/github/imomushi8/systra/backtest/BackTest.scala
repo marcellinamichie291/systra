@@ -7,6 +7,11 @@ import com.github.imomushi8.systra.behavior.Tradable
 
 import cats.implicits._
 
+import org.slf4j.{Logger, LoggerFactory}
+
+/** バックテスト用のロガー */
+lazy val globalLogger: Logger = LoggerFactory.getLogger(getClass.getName)
+
 /** Tradableのバックテスト用インスタンス */
 object BackTest extends Tradable[BTMarket]
 

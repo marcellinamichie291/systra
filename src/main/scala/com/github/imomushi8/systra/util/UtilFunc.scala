@@ -2,6 +2,9 @@ package com.github.imomushi8.systra.util
 
 import com.github.imomushi8.systra.entity._
 
+/** BUYならtrue, SELLならfalse */
+def isBUY(side: Side): Boolean = side > 0
+
 /** STOP_LIMIT注文かどうかを判定 */
 def isSTOP_LIMIT(order: Order): Boolean = order.isSTOP && order.isLIMIT
 
