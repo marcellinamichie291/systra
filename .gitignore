@@ -5,3 +5,5 @@ null/
 target
 .scalafmt.conf
 .idea
+logback.xml
+logs

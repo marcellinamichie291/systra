@@ -1,7 +1,7 @@
 package com.github.imomushi8.systra.report
 
 /*--------------------------------------------------------------------------------------------*/
-import com.github.imomushi8.systra.util.Position
+import com.github.imomushi8.systra.entity.Position
 import java.time.LocalDateTime
 /*--------------------------------------------------------------------------------------------*/
 

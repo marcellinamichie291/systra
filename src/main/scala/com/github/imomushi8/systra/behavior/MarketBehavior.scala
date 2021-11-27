@@ -1,9 +1,11 @@
 package com.github.imomushi8.systra.behavior
 
-import cats.effect.{ExitCode, IO}
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report._
+
+import cats.effect.{ExitCode, IO}
 
 trait MarketBehavior[Market]:
   def placeOrder(current: Market,

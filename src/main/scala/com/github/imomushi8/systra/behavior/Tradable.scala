@@ -3,6 +3,7 @@ package com.github.imomushi8.systra.behavior
 import com.github.imomushi8.systra.Actions.Brain
 import com.github.imomushi8.systra.{MarketContext, TradeAction, Next, End}
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.behavior._
 

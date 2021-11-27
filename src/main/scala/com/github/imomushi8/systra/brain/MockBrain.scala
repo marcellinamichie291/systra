@@ -8,6 +8,7 @@ import cats.implicits.catsSyntaxOptionId
 
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.Actions._
 import com.github.imomushi8.systra.behavior._
 

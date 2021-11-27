@@ -1,6 +1,7 @@
 package com.github.imomushi8.systra
 
-import com.github.imomushi8.systra.util.Chart
+import com.github.imomushi8.systra.entity.Chart
+
 import cats.data.{State, EitherT, StateT}
 import cats.implicits.catsSyntaxApplicativeId
 import cats.effect.unsafe.implicits.global
