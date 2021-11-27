@@ -3,6 +3,7 @@ import com.github.imomushi8.systra.brain._
 import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.backtest.BTMarket._
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report.PositionReport
 
 import org.scalacheck.{Arbitrary, Gen}

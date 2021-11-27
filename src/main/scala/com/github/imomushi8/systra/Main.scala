@@ -3,7 +3,7 @@ package com.github.imomushi8.systra
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.backtest.BTMarket._
-import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report.{Report, PositionReport}
 import com.github.imomushi8.systra.brain.MockBrain
 

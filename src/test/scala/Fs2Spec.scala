@@ -2,7 +2,8 @@ import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.brain._
 import com.github.imomushi8.systra.Actions.Brain
 import com.github.imomushi8.systra.backtest.{BackTest, BTMarket}
-import com.github.imomushi8.systra.util.{Chart, Order, MARKET}
+import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -36,11 +37,9 @@ class Fs2Spec
     (for {
       refMarket <- ctx.getMarket
       id <- refMarket.placeOrder(MARKET(SELL), size, expire)
-    } yield id)
+    } yield id).unsafeRunSync()
     
     ctx.market should not equal (initMarket)
-
-
   }
 /*
   val initMemory: Memory = Monoid[Memory].empty

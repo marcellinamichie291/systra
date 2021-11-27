@@ -1,6 +1,6 @@
-package com.github.imomushi8.systra.util
+package com.github.imomushi8.systra.entity
 
-import com.github.imomushi8.systra._
+import com.github.imomushi8.systra.util.{datetimeFormatter, Price, Volume, TimeStamp}
 
 /** OHLCV形式のデータ */
 case class Chart(open       :Price,

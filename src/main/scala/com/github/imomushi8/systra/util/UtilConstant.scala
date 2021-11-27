@@ -1,4 +1,5 @@
-package com.github.imomushi8.systra
+package com.github.imomushi8.systra.util
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

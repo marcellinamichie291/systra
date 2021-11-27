@@ -1,7 +1,6 @@
 package com.github.imomushi8.systra
 
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.Actions._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.util._
 import com.github.imomushi8.systra.behavior.MarketBehavior
 
@@ -12,7 +11,7 @@ import cats.implicits.catsSyntaxFlatMapOps
 import cats.effect.unsafe.implicits.global
 
 
-case class MarketContext[Market](capital   :Double,
+case class MarketContext[Market](capital   :Price,
                                  orders    :List[Order],
                                  positions :List[Position],
                                  market    :Market)

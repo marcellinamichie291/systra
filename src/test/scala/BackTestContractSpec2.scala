@@ -1,7 +1,7 @@
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.backtest._
-import com.github.imomushi8.systra.backtest.{BackTest, BTMarket}
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report.PositionReport
 
 import org.scalacheck.{Arbitrary, Gen}
@@ -23,28 +23,48 @@ class BackTestContractSpec2
   with ScalaCheckDrivenPropertyChecks
   with TableDrivenPropertyChecks
   with Checkers:
-/*
+
   "checkAllContract(chart, orders, positions)" should "pass all tests for any arities" in forAll(genChart, Gen.listOf(genOrder), Gen.listOf(genPosition)) {
     (chart: Chart, orders: List[Order], positions:List[Position]) =>
-      val (nextOrder, nextPositions, closed) = checkAllContract(chart, orders, positions)
-      for(order <- orders.filter(_.id.nonEmpty)) {
+      val _orders = orders.map {order => 
+        if order.id == "" then order.copy(id="-1") else order
+      }.distinct
+
+      val contracted = _orders filter isContracted(chart)
+      val nonContracted = _orders diff contracted
+      val (nextOrders, nextPositions, reports) = checkAllContract(chart, _orders, positions)
+      
+      for(order <- _orders) {
         if isContracted(chart)(order) then
-          nextOrder should not contain (order)
+          nextOrders should not contain (order)
 
           if isSTOP_LIMIT(order) then
-            nextOrder should contain (order.invalidateTriggerPrice)
+            nextOrders should contain (order.invalidateTriggerPrice)
           else
             if order.isSettle then
               nextPositions.map(_.id) should not contain (order.settlePositionId)
-              closed should contain allElementsOf (settle(chart, positions)(order))
+              reports should contain allElementsOf (makeReport(settle(chart, positions)(order)))
             else 
               nextPositions should contain (createPosition(chart)(order))
+              nextOrders should not contain (order)
+              val specificRelated = getRelated(nonContracted)(order)
+
+              nextOrders should contain allElementsOf (convertOrders(specificRelated)(order))
+              if specificRelated.nonEmpty then nextOrders should not contain allElementsOf (specificRelated)
 
         else
-          nextOrder should contain (order)
+          val parentContracted  = contracted filter (order.parentId == _.id)
+          val brotherContracted = contracted filter (order.brotherId == _.id)
+          if (parentContracted filterNot isSTOP_LIMIT).nonEmpty then 
+            nextOrders should contain (order.invalidateParentId)
+          if (parentContracted filter isSTOP_LIMIT).nonEmpty then 
+            nextOrders should not contain (order)
+          if brotherContracted.nonEmpty then 
+            nextOrders should not contain (order)
+          if parentContracted.isEmpty && brotherContracted.isEmpty then 
+            nextOrders should contain (order)
       }
     }
-*/
 
   "checkAllContract(chart, orders, positions)" should "pass all tests" in forAll(genMarketContext) {
     case (chart, nonContractedOrders, contractedOrders, settledOrders, positions) => 

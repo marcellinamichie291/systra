@@ -1,8 +1,8 @@
-package com.github.imomushi8.systra.util
+package com.github.imomushi8.systra.entity
 
 /*--------------------------------------------------------------------------------------------*/
 import cats.kernel.Monoid
-import com.github.imomushi8.systra.{ID, Price, Side}
+import com.github.imomushi8.systra.util.{ID, Price, Side}
 /*--------------------------------------------------------------------------------------------*/
 
 

@@ -1,7 +1,7 @@
 package com.github.imomushi8.systra.backtest
 
-import com.github.imomushi8.systra.{Price, ID, Size, TimeStamp}
-import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.util.{ID, Size, TimeStamp}
+import com.github.imomushi8.systra.entity._
 
 /**
  * 発注処理を行う

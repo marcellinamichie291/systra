@@ -3,6 +3,7 @@ package com.github.imomushi8.systra.backtest
 import cats.effect.{ExitCode, IO}
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.behavior.MarketBehavior
 import com.typesafe.scalalogging.LazyLogging
