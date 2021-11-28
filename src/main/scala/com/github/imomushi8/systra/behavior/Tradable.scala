@@ -16,8 +16,13 @@ import cats.effect.unsafe.implicits.global
 import fs2._
 
 trait Tradable[Market](using MarketBehavior[Market]):
-  def apply[Memory](brain: Brain[Market, Memory]): Chart => State[(Market, Memory), Vector[Report]] = 
-    tradeFlow(brain)
+  def apply[Memory](trade      : Chart => State[(Market, Memory), Vector[Report]], 
+                    initMarket : Market, 
+                    initMemory : Memory): Pipe[IO, Chart, Vector[Report]] = _
+    .scan(((initMarket, initMemory), Vector[Report]())) { (current, chart) => trade(chart).run(current._1).value }
+    .map(_._2)
+  
+  def trade[Memory](brain: Brain[Market, Memory]): Chart => State[(Market, Memory), Vector[Report]] = tradeFlow(brain)
 
   def tradeFlow[Memory](brain: Brain[Market, Memory])(chart: Chart): State[(Market, Memory), Vector[Report]] = 
       for

@@ -42,8 +42,8 @@ object BTMarket extends LazyLogging:
       val newOrders = makeOrder(current.chart, current.positions, current.sequenceId, method, size, expire)
 
       // 注文に伴う資金減少 FIXME: STOPのときに資金が減らない問題
-      val cost = newOrders.map {order => 
-        if order.isLIMIT then order.price*order.size else order.triggerPrice*order.size }.sum
+      val cost = newOrders.map { order => 
+        if order.isLIMIT then order.side*order.price*order.size else order.side*order.triggerPrice*order.size }.sum
       val nextCapital = current.capital - cost
 
       /* 発注後の資金がマイナスなら例外を投げる */
@@ -107,7 +107,7 @@ object BTMarket extends LazyLogging:
       
         val pl = (reports map {
           case PositionReport(_, _, side, size, openPrice, closePrice, cost) => 
-            (side*(closePrice - openPrice))*size + cost
+            side*closePrice*size + cost // 
           case _ => 0 // ありえないが、exhaustingをなくすため
         }).sum
         

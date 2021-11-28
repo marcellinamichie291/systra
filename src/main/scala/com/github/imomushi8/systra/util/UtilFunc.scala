@@ -12,10 +12,10 @@ def isSTOP_LIMIT(order: Order): Boolean = order.isSTOP && order.isLIMIT
 def hasContractEvent(chart: Chart, order: Order): Boolean =
   if order.isSTOP then 
     val thresPrice = if order.isBUY then chart.high else chart.low
-    order.side * thresPrice > order.side * order.triggerPrice
+    order.side * thresPrice >= order.side * order.triggerPrice
   else 
     val thresPrice = if order.isBUY then chart.low else chart.high
-    order.side * thresPrice < order.side * order.price
+    order.side * thresPrice <= order.side * order.price
 
 /** 
  * 約定しているかどうかの判定

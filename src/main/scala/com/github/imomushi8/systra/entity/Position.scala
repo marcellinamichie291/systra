@@ -1,7 +1,7 @@
 package com.github.imomushi8.systra.entity
 
 /*--------------------------------------------------------------------------------------------*/
-import com.github.imomushi8.systra.util.{ID, Side, Price, Size, TimeStamp}
+import com.github.imomushi8.systra.util.{BUY, SELL, ID, Side, Price, Size, TimeStamp}
 /*--------------------------------------------------------------------------------------------*/
 
 
@@ -23,3 +23,7 @@ case class  Position(openTime :TimeStamp,
     f"Position($sideStr, $price%.3f yen, $size%.3f amount, ID: $id)"
   }
 }
+
+extension (position: Position)
+  /** ポジションと逆サイドを返す */
+  def oppositeSide: Side = if position.side > 0 then SELL else BUY

@@ -32,11 +32,12 @@ object MockBrain:
 
       val size = 1
       val expire = chart.datetime.plusMonths(1)
-      /*
+
       if context.positions.nonEmpty then
+        val settlePosition = context.positions.head
         val ref = for
           refMarket <- context.getMarket
-          id  <- refMarket.placeOrder(MARKET(SELL, positionId = context.positions.head.id), size, expire)
+          id  <- refMarket.placeOrder(MARKET(settlePosition.oppositeSide, positionId = settlePosition.id), size, expire)
           //oco <- IO { OCO(LIMIT(SELL, chart.close * 1.001, id), STOP(SELL, chart.close * 0.999, id)) }
           //_   <- refMarket.placeOrder(oco, size, expire)
         yield refMarket
@@ -47,8 +48,7 @@ object MockBrain:
           _ <- refMarket.placeOrder(LIMIT(BUY, 3), size, expire)
         yield refMarket
         Actions.nextHandleErrorWith(newMemory, context, ref)
-      */
-      Actions.next(newMemory, context)
+      //Actions.next(newMemory, context)
 /*
       // ポジションがある場合のみ注文する
       if (context.positions.nonEmpty) {
