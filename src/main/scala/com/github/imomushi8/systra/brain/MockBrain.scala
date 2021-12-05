@@ -30,11 +30,13 @@ object MockBrain:
           Memory(memory.chartList.takeRight(previousDay) :+ chart)
         else Memory(memory.chartList :+ chart)
 
-      val size = 1
+      val size = 100
       val expire = chart.datetime.plusMonths(1)
 
       if context.positions.nonEmpty then
         val settlePosition = context.positions.head
+
+        // ここが注文処理
         val ref = for
           refMarket <- context.getMarket
           id  <- refMarket.placeOrder(MARKET(settlePosition.oppositeSide, positionId = settlePosition.id), size, expire)
@@ -43,11 +45,18 @@ object MockBrain:
         yield refMarket
         Actions.nextHandleErrorWith(newMemory, context, ref)
       else
+        val priceDiff = chart.close - newMemory.chartList.head.close
+        val method = 
+          if priceDiff > 0 then LIMIT(BUY, newMemory.chartList.head.close) 
+          else LIMIT(SELL, chart.close)
+
         val ref = for
           refMarket <- context.getMarket 
-          _ <- refMarket.placeOrder(LIMIT(BUY, 3), size, expire)
+          _ <- refMarket.placeOrder(method, size, expire)
         yield refMarket
+
         Actions.nextHandleErrorWith(newMemory, context, ref)
+
       //Actions.next(newMemory, context)
 /*
       // ポジションがある場合のみ注文する

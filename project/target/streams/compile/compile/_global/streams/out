@@ -1,0 +1,79 @@
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:13:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel" %% "cats-core"            % catsVersion,[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:14:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel" %% "cats-free"            % catsVersion,[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:15:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel" %% "cats-effect"          % "3.2.9",[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:16:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel" %% "cats-mtl"             % "1.2.1",[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:17:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalactic" %% "scalactic"            % "3.2.10",[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:18:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "co.fs2"        %% "fs2-core"             % fs2Version,[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:19:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "co.fs2"        %% "fs2-io"               % fs2Version,[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:20:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "co.fs2"        %% "fs2-reactive-streams" % fs2Version,[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:21:25: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "co.fs2"        %% "fs2-scodec"           % fs2Version,[0m
+[0m[[0m[31merror[0m] [0m[0m                        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:23:39: value % is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "ch.qos.logback"              %  "logback-classic"  % "1.2.6",[0m
+[0m[[0m[31merror[0m] [0m[0m                                      ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:24:39: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "com.typesafe.scala-logging"  %% "scala-logging"    % "3.9.4",[0m
+[0m[[0m[31merror[0m] [0m[0m                                      ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:26:29: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalatest"     %% "scalatest"        % "3.2.10"    % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:26:67: not found: value Test[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalatest"     %% "scalatest"        % "3.2.10"    % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:27:29: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalatestplus" %% "scalacheck-1-15"  % "3.2.10.0"  % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:27:67: not found: value Test[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalatestplus" %% "scalacheck-1-15"  % "3.2.10.0"  % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:28:29: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalacheck"    %% "scalacheck"       % "1.15.4"    % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:28:67: not found: value Test[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalacheck"    %% "scalacheck"       % "1.15.4"    % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:29:29: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel"     %% "cats-laws"        % catsVersion % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:29:67: not found: value Test[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel"     %% "cats-laws"        % catsVersion % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:30:29: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel"     %% "discipline-munit" % "1.0.9"     % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:30:67: not found: value Test[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.typelevel"     %% "discipline-munit" % "1.0.9"     % Test,[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:31:29: value %% is not a member of String[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalameta"     %% "munit"            % "0.7.29"    % Test[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:31:67: not found: value Test[0m
+[0m[[0m[31merror[0m] [0m[0m        "org.scalameta"     %% "munit"            % "0.7.29"    % Test[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:35:9: not found: value Classpaths[0m
+[0m[[0m[31merror[0m] [0m[0m        Classpaths.sbtPluginReleases[0m
+[0m[[0m[31merror[0m] [0m[0m        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:49:9: not found: value Tests[0m
+[0m[[0m[31merror[0m] [0m[0m        Tests.Argument(TestFrameworks.ScalaTest, "-fWDT", s"target/test-report_$projectName.txt", "-eNDXEHLO")[0m
+[0m[[0m[31merror[0m] [0m[0m        ^[0m
+[0m[[0m[31merror[0m] [0m[0mC:\workspace_Scala_VSCode\systra\project\Dependencies.scala:49:24: not found: value TestFrameworks[0m
+[0m[[0m[31merror[0m] [0m[0m        Tests.Argument(TestFrameworks.ScalaTest, "-fWDT", s"target/test-report_$projectName.txt", "-eNDXEHLO")[0m
+[0m[[0m[31merror[0m] [0m[0m                       ^[0m
+[0m[[0m[31merror[0m] [0m[0m26 errors found[0m

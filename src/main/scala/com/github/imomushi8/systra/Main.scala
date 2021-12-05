@@ -8,16 +8,14 @@ import com.github.imomushi8.systra.brain._
 
 import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.backtest.BTMarket._
+import com.github.imomushi8.systra.SystemTrade.given_IttoCSVFormat
 
 import java.time.LocalDateTime
-import concurrent.duration.DurationInt
 
-import fs2._
-import cats.data.State
-import cats.kernel.Monoid
 import cats.implicits._
 import cats.effect._
-import cats.effect.unsafe.implicits.global
+import fs2._
+import com.github.gekomad.ittocsv.parser.io.FromFile.csvFromFileStream
 
 /*
  * ポジションのすべてを閉じるのではなく、sizeの差分だけ決済する処理を行うシストレの新しいフレームワークが欲しい
@@ -25,50 +23,34 @@ import cats.effect.unsafe.implicits.global
  */ 
 
 object Main extends IOApp:
-  val seqId = 8
-  val charts = List(
-    Chart(1,1,1,1,1,LocalDateTime.now),
-    Chart(2,2,2,2,2,LocalDateTime.now),
-    Chart(3,3,3,3,3,LocalDateTime.now),
-    Chart(4,4,4,4,4,LocalDateTime.now),
-    Chart(5,5,5,5,5,LocalDateTime.now),
-  )
-
-  val orders = List(
-    Order("2", BUY, 1, 0, 1, LocalDateTime.now.plusMonths(1), settlePositionId="", isMarket = true),
-    Order("3", SELL, 0, 3, 1, LocalDateTime.now.plusMonths(1), settlePositionId="", parentId="2", brotherId="6"),
-    Order("4", SELL, 2, 0, 1, LocalDateTime.now.plusMonths(1), settlePositionId="1"),
-    Order("5", SELL, 3, 0, 1, LocalDateTime.now.plusMonths(1), settlePositionId=""),
-    Order("6", BUY, 2, 0, 1, LocalDateTime.now.plusMonths(1), settlePositionId="", parentId="2", brotherId="3"),
-    Order("7", BUY, 1, 3, 1, LocalDateTime.now.plusMonths(1), settlePositionId="")
-  )
-
-  val positions = List(
-    Position(LocalDateTime.now, "1", BUY, 1, 1)
-  )
-
 
   override def run(args: List[String]): IO[ExitCode] =
-    val initMarket = BTMarket(1000, orders, positions, seqId, charts.head, 8)
-    //val initMarket = BTMarket(1000, Nil, Nil, 1, charts.head, 0)
-    val initMemory = Monoid[MockBrain.Memory].empty
+    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2021_02.csv"
+    val writeCsvPath = "reports/test.csv"
+    val firstCapital = 10000000
+    val dummyChart = Chart(0,0,0,0,0,LocalDateTime.now)
     val brain = MockBrain[BTMarket](1)
-    
-    val trade = BackTest.trade[MockBrain.Memory](brain)
 
-    Stream[IO, Chart](charts*)
-      .through(BackTest(trade, initMarket, initMemory))
-      .compile
-      .foldMonoid
-      .handleError { t => 
-        t.printStackTrace
-        Vector()
+    /* Chartを流すStream */
+    val chartStream = csvFromFileStream[OHLCV](readCsvPath, skipHeader = true)
+      .scan(dummyChart) { (prev, csvEither) => csvEither match 
+        case Left(_) => prev
+        case Right(csv) => 
+          val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
+          Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
       }
-      .map {reports => 
-        println("------------------------------------------------------------------")
-        println("REPORT\n" + reports)
-        println("------------------------------------------------------------------")
-        println("DISTINCT REPORT\n" + reports.distinct)
-        
-      }.as(ExitCode.Success)
-
+    
+    /* ここでstreamを取得する */
+    val stream = SystemTrade.backtestStreamReportToCsv[MockBrain.Memory](
+      writeCsvPath,
+      chartStream,
+      firstCapital,
+      dummyChart,
+      brain)
+    
+    /* 実行 */
+    stream
+      .compile
+      .drain
+      .handleError { t => t.printStackTrace }
+      .as(ExitCode.Success)
