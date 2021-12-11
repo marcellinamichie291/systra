@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 
 /** トレード終了時に行うレポート */
 case class SummaryReport(traderName: String,
-                         sampleSize: Int,
+                         sampleSize: Long,
                          longReport: SummarySubReport,
                          shortReport: SummarySubReport,
                          allReport: SummarySubReport,
@@ -27,7 +27,7 @@ case class SummaryReport(traderName: String,
 object SummaryReport extends Report:
   extension (current: SummaryReport)
     def ++ (traderName: String, 
-            sampleSize: Int, 
+            sampleSize: Long, 
             currentCapital:Price, 
             currentMax:Price, 
             currentSuccWin:Int, 
@@ -39,7 +39,7 @@ object SummaryReport extends Report:
 
   def update(current: SummaryReport)
             (traderName: String, 
-             sampleSize: Int, 
+             sampleSize: Long, 
              currentCapital:Price, 
              currentMax:Price, 
              currentSuccWin:Int, 

@@ -8,7 +8,6 @@ import com.github.imomushi8.systra.brain._
 
 import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.backtest.BTMarket._
-import com.github.imomushi8.systra.SystemTrade.given_IttoCSVFormat
 
 import java.time.LocalDateTime
 import concurrent.duration.DurationInt
@@ -32,36 +31,58 @@ import cats.kernel.Monoid
  */ 
 
 object Main extends IOApp:
+
+  given IttoCSVFormat = IttoCSVFormat.default
+  given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
+
   override def run(args: List[String]): IO[ExitCode] =
     val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2021_02.csv"
     val writeCsvPath = "reports/test.csv"
     val firstCapital = 10000000
-    val dummyChart = Chart(0,0,0,0,0,LocalDateTime.now)
     val brain = MockBrain[BTMarket](1)
 
     /* Chartを流すStream */
     val chartStream = csvFromFileStream[OHLCV](readCsvPath, skipHeader = false)
-      .scan(dummyChart) { (prev, csvEither) => csvEither match 
-        case Left(_) => prev
-        case Right(csv) => 
-          val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
-          Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
-      }
+
+    /* 初期チャートを取得する（IOモナドになっている） */
+    val firstChart = chartStream.head.map {
+      case Left(_) => throw Exception("First Chart Element is invalid.")
+      case Right(csv) => 
+        val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
+        Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
+    }.compile.last.map{_.get}
+    
+    /* IOモナドで覆ったStreamを取得する */
+    val streamIO = firstChart.map { head =>
+      chartStream
+        .tail // 最初の行は既に取得済みのため、tailを追加
+        .scan(head) { (prev, csvEither) => csvEither match 
+          case Left(_) => prev
+          case Right(csv) => 
+            val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
+            Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
+        }
+    }
       
-    /* ここでstreamを取得する */
-    val backtestPipe = SystemTrade.backtestStreamReportToCsv[MockBrain.Memory](
+    /* バックテストのPipeを取得 */
+    val tradePipeIO = SystemTrade.backtestStreamReportToCsv[MockBrain.Memory](
+      brain,
       "MockBrain",
-      0,
-      writeCsvPath,
       firstCapital,
-      dummyChart,
-      brain)
-      
+      firstChart,
+      writeCsvPath)
+
     /* 実行 */
-    chartStream
-      .through(backtestPipe)
-      .compile
-      .drain
-      .flatMap{_=> IO.println("Done Write CSV") }
-      .handleError { t => t.printStackTrace }
-      .as(ExitCode.Success)
+    (for 
+      stream    <- streamIO
+      tradePipe <- tradePipeIO
+    yield
+      stream
+        .through(tradePipe)
+        .compile
+        .drain
+    )
+    .flatten
+    .flatMap{_=> IO.println("Done Write CSV") }
+    .handleError { t => t.printStackTrace }
+    .as(ExitCode.Success)

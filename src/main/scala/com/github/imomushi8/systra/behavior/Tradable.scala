@@ -17,23 +17,24 @@ import cats.effect.unsafe.implicits.global
 import fs2._
 
 trait Tradable[Market](using MarketBehavior[Market]):
-  def apply[Memory](trade      : Chart => StateT[IO, (Market, Memory), Vector[Report]],
-                    initMarket : Market, 
-                    initMemory : Memory): Pipe[IO, Chart, Vector[Report]] = _
-    .evalScan(((initMarket, initMemory), Vector[Report]())) { (current, chart) => trade(chart).run(current._1) }
-    .map(_._2)
+  def apply[Memory](brain:      Brain[Market, Memory],//trade: Chart => StateT[IO, (Market, Memory), Vector[Report]],
+                    initMarket: Market, 
+                    initMemory: Memory): Pipe[IO, Chart, Vector[Report]] = {
+    val f = trade(brain)
+    stream => stream
+      .evalScan(((initMarket, initMemory), Vector[Report]())) { (current, chart) => f(chart).run(current._1) }
+      .map(_._2)
+  }
   
-  def trade[Memory](brain: Brain[Market, Memory]): Chart =>StateT[IO, (Market, Memory), Vector[Report]] = tradeFlow(brain)
-
-  def tradeFlow[Memory](brain: Brain[Market, Memory])(chart: Chart): StateT[IO, (Market, Memory), Vector[Report]] = 
-      for
-        ?       <- updateChart(chart)
-        reports <- checkContract[Memory]
-        action  <- execAction(chart, brain)
-        ?       <- action match
-                    case Next(market, memory) => StateT.set[IO, (Market, Memory)]((market, memory))
-                    case End(endMsg)          => StateT.liftF(IO(throw new Exception(endMsg))) // TODO: なにかしか独自エラークラスを定義すべき？
-      yield reports
+  def trade[Memory](brain: Brain[Market, Memory])(chart: Chart): StateT[IO, (Market, Memory), Vector[Report]] = 
+    for
+      ?       <- updateChart(chart)
+      reports <- checkContract[Memory]
+      action  <- execAction(chart, brain)
+      ?       <- action match
+                  case Next(market, memory) => StateT.set[IO, (Market, Memory)]((market, memory))
+                  case End(endMsg)          => StateT.liftF(IO(throw new Exception(endMsg))) // TODO: なにかしか独自エラークラスを定義すべき？
+    yield reports
 
   def checkContract[Memory]: StateT[IO, (Market, Memory), Vector[Report]] = StateT { case (market, memory) => 
     market.contract.map { case (nextMarket, logs) => ((nextMarket, memory), logs.toVector)}
