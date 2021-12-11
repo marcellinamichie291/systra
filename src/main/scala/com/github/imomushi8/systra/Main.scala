@@ -32,8 +32,6 @@ import cats.kernel.Monoid
  */ 
 
 object Main extends IOApp:
-  given IttoCSVFormat = IttoCSVFormat.default
-  given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
   override def run(args: List[String]): IO[ExitCode] =
     val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2021_02.csv"
     val writeCsvPath = "reports/test.csv"
@@ -58,18 +56,12 @@ object Main extends IOApp:
       firstCapital,
       dummyChart,
       brain)
-
-    val tradeFunc = BackTest.trade(brain)
-    val initMarket = BTMarket(firstCapital, Nil, Nil, 1, dummyChart, 0)
-    val initMemory = Monoid[MockBrain.Memory].empty
-    
+      
     /* 実行 */
     chartStream
-      .through(BackTest(tradeFunc, initMarket, initMemory)) // こいつが内部でunsafeRunSyncを使っているのが悪さしてるっぽい
-      .map(println)
-      //.through(backtestPipe)
-      //.interruptAfter(1.second)
+      .through(backtestPipe)
       .compile
       .drain
+      .flatMap{_=> IO.println("Done Write CSV") }
       .handleError { t => t.printStackTrace }
       .as(ExitCode.Success)

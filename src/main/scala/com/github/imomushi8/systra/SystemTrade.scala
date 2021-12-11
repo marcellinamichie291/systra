@@ -61,8 +61,5 @@ object SystemTrade:
       .through(makeSummary(writeCsvPath, traderName, sampleSize))
       .map(_.toString)
       .intersperse(System.lineSeparator)
-      .map(print)
-      /*
       .through(text.utf8.encode)
       .through(Files[IO].writeAll(Path(writeCsvPath)))
-      */

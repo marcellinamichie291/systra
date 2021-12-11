@@ -43,7 +43,7 @@ object MockBrain:
           //oco <- IO { OCO(LIMIT(SELL, chart.close * 1.001, id), STOP(SELL, chart.close * 0.999, id)) }
           //_   <- refMarket.placeOrder(oco, size, expire)
         yield refMarket
-        Actions.nextHandleErrorWith(newMemory, context, ref)
+        Actions.nextHandleErrorWith(newMemory, ref)
       else
         val priceDiff = chart.close - newMemory.chartList.head.close
         val method = 
@@ -55,7 +55,7 @@ object MockBrain:
           _ <- refMarket.placeOrder(method, size, expire)
         yield refMarket
 
-        Actions.nextHandleErrorWith(newMemory, context, ref)
+        Actions.nextHandleErrorWith(newMemory, ref)
 
       //Actions.next(newMemory, context)
 /*
