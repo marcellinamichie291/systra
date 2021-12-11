@@ -34,6 +34,12 @@ case class SummarySubReport(winCount: Int,
     cost + that.cost)
 }
 
+extension (sub:SummarySubReport)
+  def +=(pl: Double, cost: Double):SummarySubReport = if pl > 0 then
+    sub.copy(winCount = sub.winCount+1, profit = sub.profit+pl, cost = sub.cost+cost)
+  else
+    sub.copy(loseCount = sub.loseCount+1, loss = sub.loss+pl, cost = sub.cost+cost)
+
 /*--------------------------------------------------------------------------------------------*/
 
 object SummarySubReport extends Report {

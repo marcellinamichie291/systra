@@ -1,6 +1,7 @@
 package com.github.imomushi8.systra.report
 
 /*--------------------------------------------------------------------------------------------*/
+import com.github.imomushi8.systra.util._
 import scala.annotation.tailrec
 /*--------------------------------------------------------------------------------------------*/
 
@@ -12,20 +13,49 @@ case class SummaryReport(traderName: String,
                          allReport: SummarySubReport,
                          maximalDrawDown: Double,
                          consecutiveWinCount: Int,
-                         consecutiveLoseCount: Int) extends Report {
+                         consecutiveLoseCount: Int) extends Report:
   override val toList: List[String] =
     List(traderName, sampleSize.toString) ++
     longReport.toList ++
     shortReport.toList ++
     allReport.toList ++
     List(f"$maximalDrawDown%.3f", consecutiveWinCount.toString, consecutiveLoseCount.toString)
-}
-
 
 /*--------------------------------------------------------------------------------------------*/
 
 
 object SummaryReport extends Report:
+  extension (current: SummaryReport)
+    def ++ (traderName: String, 
+            sampleSize: Int, 
+            currentCapital:Price, 
+            currentMax:Price, 
+            currentSuccWin:Int, 
+            currentSuccLose:Int,
+            side:Side, 
+            pl:Price, 
+            cost:Price): SummaryReport = 
+      update(current)(traderName, sampleSize, currentCapital, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
+
+  def update(current: SummaryReport)
+            (traderName: String, 
+             sampleSize: Int, 
+             currentCapital:Price, 
+             currentMax:Price, 
+             currentSuccWin:Int, 
+             currentSuccLose:Int,
+             side:Side, 
+             pl:Price, 
+             cost:Price): SummaryReport =
+
+    val (nextLongSub, nextShortSub) = 
+      if side > 0 then (current.longReport += (pl, cost), current.shortReport)
+      else             (current.longReport, current.shortReport += (pl, cost))
+    val nextMDD      = current.maximalDrawDown max (currentMax - currentCapital)
+    val nextConsWin  = current.consecutiveWinCount max currentSuccWin
+    val nextConsLose = current.consecutiveLoseCount max currentSuccLose
+
+    SummaryReport(traderName, sampleSize, nextLongSub, nextShortSub, nextLongSub + nextShortSub, nextMDD, nextConsWin, nextConsLose)
 
   /** PositionReportのListからレポートをまとめる */
   def makeReport(sampleSize:Int, traderName:String, records:List[PositionReport]): SummaryReport = {
@@ -55,30 +85,26 @@ object SummaryReport extends Report:
   }
 
   /** 最大ドローダウンを返す関数 */
-  private def makeMaximalDrawDown(plSeries:List[Double]):Double = {
+  private def makeMaximalDrawDown(plSeries:List[Double]):Double =
     val capitalSeries = plSeries.scanLeft(0.0)(_+_).tail                                  // 累積和をとって資産曲線を作る
     val maximumSeries = for(i <- capitalSeries.indices) yield capitalSeries.take(i+1).max // 資産曲線の各時点までで最大のもの
     /* 最大曲線と資産曲線を引いたもの（ドローダウン）のうち、最大のものを返す */
     (maximumSeries zip capitalSeries).map { case (maximum, capital) => maximum-capital }.maxOption.getOrElse(0)
-  }
 
   /** 連勝を正の数、連敗を負の数で数えてリストで返す関数 */
-  private def makeConsecutiveList(plSeries:List[Double]):List[Int] = {
+  private def makeConsecutiveList(plSeries:List[Double]):List[Int] =
     @tailrec
-    def consecutiveCount(series:List[Double], consecutiveList:List[Int]):List[Int] = series match {
+    def consecutiveCount(series:List[Double], consecutiveList:List[Int]):List[Int] = series match
       case series if series.head > 0  => consecutiveCount(series.dropWhile(_>0),  series.takeWhile(_>0).size::consecutiveList)
       case series if series.head < 0  => consecutiveCount(series.dropWhile(_<0), -series.takeWhile(_<0).size::consecutiveList)
       case series if series.head == 0 => consecutiveCount(series.dropWhile(_==0), consecutiveList)
       case _                          => consecutiveList
-    }
-
     consecutiveCount(plSeries, Nil)
-  }
 
   /** レポート要素を文字列にしたリスト */
   override val toList: List[String] =
     List("TraderName", "SampleSize") ++
-    SummarySubReport.toList.map("Long".concat) ++
-    SummarySubReport.toList.map("Short".concat) ++
+    SummarySubReport.toList.map("Long " + _) ++
+    SummarySubReport.toList.map("Short " + _) ++
     SummarySubReport.toList ++
     List("MaximalDrawDown", "ConsecutiveWinCount", "ConsecutiveLoseCount")

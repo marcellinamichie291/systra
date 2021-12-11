@@ -21,7 +21,6 @@ object Actions {
       case Right(next)     => Next(next, memory)
       case Left(throwable) => End(throwable.getMessage)
     
-      
   /** エラー処理はBrain側でやらせるので、この関数は必ずNextを返す */
   def next[Market, Memory, A](memory: Memory, 
                               context: MarketContext[Market], 
