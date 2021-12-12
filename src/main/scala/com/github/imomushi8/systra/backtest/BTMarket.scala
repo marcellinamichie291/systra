@@ -12,8 +12,7 @@ case class BTMarket(capital     :Double,
                     orders      :List[Order],
                     positions   :List[Position],
                     sequenceId  :Int,
-                    chart       :Chart,
-                    count       :Int): // TODO: fs2/Streamのメソッドでカウント関数があるので、もしかしたら削除可能かも
+                    chart       :Chart):
   override val toString:String = 
     f"""===================================VIEW STATE INFO===================================
        |BackTest Market
@@ -22,7 +21,6 @@ case class BTMarket(capital     :Double,
        |  Positions    : $positions
        |  Sequential ID: $sequenceId
        |  chart        : $chart
-       |  count        : $count
        |=====================================================================================""".stripMargin('|')
 
 
@@ -41,7 +39,7 @@ object BTMarket extends LazyLogging:
       
       val newOrders = makeOrder(current.chart, current.positions, current.sequenceId, method, size, expire)
 
-      // 注文に伴う資金減少 FIXME: STOPのときに資金が減らない問題
+      // 注文に伴う資金減少
       val cost = newOrders.map { order => 
         if order.isLIMIT then order.side*order.price*order.size else order.side*order.triggerPrice*order.size }.sum
       val nextCapital = current.capital - cost
@@ -87,20 +85,23 @@ object BTMarket extends LazyLogging:
 
     override def updateChart(current: BTMarket, chart: Chart): BTMarket =
       logger.debug(START, "Update Chart")
-      val next = current.copy(chart=chart, count=current.count+1)
+      val next = current.copy(chart=chart)
       logger.debug(NEXT_STATE, next)
       logger.debug(END, "Update Chart")
       next
 
     override def checkContract(current: BTMarket): IO[(BTMarket, Vector[Report])] = current match 
-      case BTMarket(capital, orders, positions, sequenceId, chart, count) => IO {
+      case BTMarket(capital, orders, positions, sequenceId, chart) => IO {
         logger.debug(START, "Check Contract")
 
         /* 有効期限切れの注文があった場合は削除する */
-        val nonExpiredOrders = orders filter { order => (chart.datetime compareTo order.expire) < 0 }
-        (orders filter { order => (chart.datetime compareTo order.expire) >= 0 }) foreach {
-          order => logger.warn(s"$order is expired.") 
-        }
+        val expiredOrders = orders filter { order => (chart.datetime compareTo order.expire) >= 0 }
+        val nonExpiredOrders = orders diff expiredOrders
+        val cancelPl = expiredOrders.map{ order => 
+          if order.isLIMIT then order.side*order.price*order.size else order.side*order.triggerPrice*order.size
+        }.sum
+
+        //expiredOrders.foreach{order => logger.warn(s"$order(Expire: ${order.expire}) is expired in ${chart.datetime}")}
 
         /* Order, Positionそれぞれについて削除・追加するものを取得する */
         val (nextOrders, nextPositions, reports) = checkAllContract(chart, nonExpiredOrders, positions)
@@ -111,11 +112,11 @@ object BTMarket extends LazyLogging:
           case _ => 0 // ありえないが、exhaustingをなくすため
         }).sum
         
-        val next = BTMarket(capital + pl, nextOrders, nextPositions, sequenceId, chart, count)
+        val next = BTMarket(capital + pl + cancelPl, nextOrders, nextPositions, sequenceId, chart)
         logger.debug(NEXT_STATE, next)
         logger.debug(END, "Check Contract")
         (next, reports)
       }
 
     override def getContext(market: BTMarket): MarketContext[BTMarket] = market match
-      case BTMarket(capital, orders, positions, _, _, _) => MarketContext(capital, orders, positions, market)
+      case BTMarket(capital, orders, positions, _, _) => MarketContext(capital, orders, positions, market)

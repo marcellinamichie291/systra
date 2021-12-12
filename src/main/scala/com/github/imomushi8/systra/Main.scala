@@ -16,6 +16,7 @@ import cats.implicits._
 import cats.effect._
 import fs2._
 import fs2.concurrent._
+import fs2.io.file.{Files, Path}
 
 import com.github.gekomad.ittocsv.parser.io.FromFile.csvFromFileStream
 import com.github.gekomad.ittocsv.core.Types.implicits._
@@ -36,10 +37,10 @@ object Main extends IOApp:
   given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
 
   override def run(args: List[String]): IO[ExitCode] =
-    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2021_02.csv"
-    val writeCsvPath = "reports/test.csv"
+    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2015_all.csv"
+    val writeCsvPath = "reports/MockBrain2.csv"
     val firstCapital = 10000000
-    val brain = MockBrain[BTMarket](1)
+    val brains = for(i <- 1 until 2) yield (s"MockBrain($i)", MockBrain[BTMarket](i))
 
     /* Chartを流すStream */
     val chartStream = csvFromFileStream[OHLCV](readCsvPath, skipHeader = false)
@@ -50,11 +51,10 @@ object Main extends IOApp:
       case Right(csv) => 
         val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
         Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
-    }.compile.last.map{_.get}
-    
-    /* IOモナドで覆ったStreamを取得する */
-    val streamIO = firstChart.map { head =>
-      chartStream
+    }.compile.last.map(_.get)
+
+    firstChart.flatMap { head =>
+      val stream = chartStream
         .tail // 最初の行は既に取得済みのため、tailを追加
         .scan(head) { (prev, csvEither) => csvEither match 
           case Left(_) => prev
@@ -62,27 +62,15 @@ object Main extends IOApp:
             val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
             Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
         }
-    }
-      
-    /* バックテストのPipeを取得 */
-    val tradePipeIO = SystemTrade.backtestStreamReportToCsv[MockBrain.Memory](
-      brain,
-      "MockBrain",
-      firstCapital,
-      firstChart,
-      writeCsvPath)
+        .through(SystemTrade.backtestStream[MockBrain.Memory](brains, firstCapital, head))
 
-    /* 実行 */
-    (for 
-      stream    <- streamIO
-      tradePipe <- tradePipeIO
-    yield
-      stream
-        .through(tradePipe)
+      (Stream.emit[IO, String](SummaryReport.toList.mkString(",")) ++ stream)
+        .intersperse(System.lineSeparator)
+        .through(text.utf8.encode)
+        .through(Files[IO].writeAll(Path(writeCsvPath)))
         .compile
         .drain
-    )
-    .flatten
+    }
     .flatMap{_=> IO.println("Done Write CSV") }
     .handleError { t => t.printStackTrace }
     .as(ExitCode.Success)

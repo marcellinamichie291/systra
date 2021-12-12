@@ -14,21 +14,20 @@ import fs2._
 import fs2.io.file.{Files, Path}
 
 object SystemTrade:
-  def backtestStreamReportToCsv[Memory:Monoid](brain:        Brain[BTMarket, Memory],
-                                               traderName:   String,firstCapital: Price,
-                                               firstChart:   IO[Chart],
-                                               writeCsvPath: String) = firstChart.map { head =>
-    val initMarket = BTMarket(firstCapital, Nil, Nil, 1, head, 0)
+  def backtestStream[Memory:Monoid](brains:       Seq[(String, Brain[BTMarket, Memory])],
+                                    firstCapital: Price,
+                                    firstChart:   Chart) =
+    val initMarket = BTMarket(firstCapital, Nil, Nil, 1, firstChart)
     val initMemory = Monoid[Memory].empty
-    
-    (chartStream:  Stream[IO, Chart]) => 
+    val pipes = brains.map { case (name, brain) => (chartStream: Stream[IO, Chart]) => 
       chartStream
         .through(BackTest(brain, initMarket, initMemory))
         .zipWithIndex
-        .flatMap { case (reports, index) => Stream((reports.map{r=>(r.asInstanceOf[PositionReport], index) })* )}
-        .through(BackTest.makeSummary(writeCsvPath, traderName))
+        .flatMap { case (reports, index) => Stream( (reports.map{r=>(r.asInstanceOf[PositionReport], index)})* )}
+        .through(BackTest.makeSummary(name))
         .map(_.toString)
-        .intersperse(System.lineSeparator)
-        .through(text.utf8.encode)
-        .through(Files[IO].writeAll(Path(writeCsvPath)))
-  }
+    }
+
+    (chartStream: Stream[IO, Chart]) => chartStream
+      .broadcastThrough(pipes*)
+

@@ -17,7 +17,7 @@ import cats.effect.unsafe.implicits.global
 import fs2._
 
 trait Tradable[Market](using MarketBehavior[Market]):
-  def apply[Memory](brain:      Brain[Market, Memory],//trade: Chart => StateT[IO, (Market, Memory), Vector[Report]],
+  def apply[Memory](brain:      Brain[Market, Memory],
                     initMarket: Market, 
                     initMemory: Memory): Pipe[IO, Chart, Vector[Report]] = {
     val f = trade(brain)

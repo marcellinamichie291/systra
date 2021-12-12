@@ -18,25 +18,25 @@ lazy val globalLogger: Logger = LoggerFactory.getLogger(getClass.getName)
 object BackTest extends Tradable[BTMarket]:
   val initSub = SummarySubReport(0,0,0,0,0)
   val initSummary = SummaryReport("", 0, initSub, initSub, initSub, 0, 0, 0)
+  
   /** SummaryReportをStream上で作成する */
-  def makeSummary(writeCsvPath: String,
-                traderName:   String): Pipe[IO, (PositionReport, Long), SummaryReport] = _
-  .map{ case (record, index) =>
-    val pl = record.side*(record.closePrice - record.openPrice)*record.size - record.cost
-    (index, record.side, pl, record.cost) /* side, pl, cost */
-  }
-  .fold((initSummary, 0.0, 0.0, 0, 0)) { 
-    case ((currentSummary, currentCapital, currentMax, currentSuccWin, currentSuccLose),
-          (index, side, pl, cost)) =>
-      val nextCapital = currentCapital + pl
-      val nextMax = currentMax max nextCapital
-      val (nextSuccWin, nextSuccLose) = 
-        if pl > 0 then (currentSuccWin+1, 0)
-        else           (0, currentSuccLose+1)
-      val nextSummary = currentSummary ++ (traderName, index, currentCapital, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
-      (nextSummary, nextCapital, nextMax, nextSuccWin, nextSuccLose)
-  }
-  .map(_._1)
+  def makeSummary(traderName: String): Pipe[IO, (PositionReport, Long), SummaryReport] = _
+    .map{ case (record, index) =>
+      val pl = record.side*(record.closePrice - record.openPrice)*record.size - record.cost
+      (index, record.side, pl, record.cost) /* side, pl, cost */
+    }
+    .fold((initSummary, 0.0, 0.0, 0, 0)) { 
+      case ((currentSummary, currentCapital, currentMax, currentSuccWin, currentSuccLose),
+            (index, side, pl, cost)) =>
+        val nextCapital = currentCapital + pl
+        val nextMax = currentMax max nextCapital
+        val (nextSuccWin, nextSuccLose) = 
+          if pl > 0 then (currentSuccWin+1, 0)
+          else           (0, currentSuccLose+1)
+        val nextSummary = currentSummary ++ (traderName, index, currentCapital, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
+        (nextSummary, nextCapital, nextMax, nextSuccWin, nextSuccLose)
+    }
+    .map(_._1)
 
 def checkAllContract(chart: Chart, orders: List[Order], positions: List[Position]): (List[Order], List[Position], Vector[Report]) =
   val contractedOrders = orders filter isContracted(chart)

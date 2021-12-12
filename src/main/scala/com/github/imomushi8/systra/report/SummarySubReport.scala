@@ -58,6 +58,7 @@ object SummarySubReport extends Report {
   override val toList: List[String] = List(
     "TradeCount",
     "WinCount",
+    "LoseCount",
     "WinRate",
     "LoseRate",
     "P/L",
