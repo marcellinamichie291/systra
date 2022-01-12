@@ -6,6 +6,8 @@ import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.brain._
 
+import mgo.evolution._
+
 import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.backtest.BTMarket._
 
@@ -37,17 +39,30 @@ object Main extends IOApp:
   given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
 
   override def run(args: List[String]): IO[ExitCode] =
-    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2015_all.csv"
-    val writeCsvPath = "reports/MockBrain2.csv"
-    val firstCapital = 10000000
-    val brains = for(i <- 1 until 2) yield (s"MockBrain($i)", MockBrain[BTMarket](i))
+    val brainName="ControlChartBrain"
+    type M = ControlChartBrain.Memory
+    val brains = for
+      t <- 24 to 96 by 24
+      maxBias <- 10 to 55 by 15
+      maxUpDown <- 10 to 55 by 15
+      maxScat <- 30 to 50 by 20
+    yield (
+      s"$brainName($t $maxBias $maxUpDown $maxScat)", 
+      ControlChartBrain[BTMarket](t, maxBias, maxUpDown, maxScat))
+    //val brains = List((s"$brainName(36 8 8 15)", ControlChartBrain[BTMarket](36, 8, 8, 15)))
+    //val brains = for t <- 36 until 108 by 6 yield (s"$brainName($t 8 8 15)", ControlChartBrain[BTMarket](t, 8, 8, 15))
+    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2016_all.csv"
+    val writeCsvPath = s"reports/${brainName}_2016.csv"
+    val firstCapital = 1_000_000.0 // 100万円
+    val leverage = 25.0 // レバレッジ
+    val leveragedCapital = firstCapital*leverage
 
     /* Chartを流すStream */
     val chartStream = csvFromFileStream[OHLCV](readCsvPath, skipHeader = false)
 
     /* 初期チャートを取得する（IOモナドになっている） */
     val firstChart = chartStream.head.map {
-      case Left(_) => throw Exception("First Chart Element is invalid.")
+      case Left(_) => throw new Exception("First Chart Element is invalid.")
       case Right(csv) => 
         val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
         Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
@@ -62,7 +77,17 @@ object Main extends IOApp:
             val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
             Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
         }
-        .through(SystemTrade.backtestStream[MockBrain.Memory](brains, firstCapital, head))
+        //.through(SystemTrade.downSampling(head))
+        //.take(1000)
+        .through(SystemTrade.backtestStream[M](brains, leveragedCapital, head))
+
+      /*
+      stream
+        .map(_.toString)
+        .printlns
+        .compile
+        .drain
+      */
 
       (Stream.emit[IO, String](SummaryReport.toList.mkString(",")) ++ stream)
         .intersperse(System.lineSeparator)
@@ -71,6 +96,6 @@ object Main extends IOApp:
         .compile
         .drain
     }
-    .flatMap{_=> IO.println("Done Write CSV") }
     .handleError { t => t.printStackTrace }
+    .flatMap{_=> IO.println("Done Write CSV") }
     .as(ExitCode.Success)

@@ -1,8 +1,9 @@
 package com.github.imomushi8.systra.backtest
 
-import com.github.imomushi8.systra.util.{isSTOP_LIMIT, isContracted}
+import com.github.imomushi8.systra.util.{Price, isSTOP_LIMIT, isContracted}
 import com.github.imomushi8.systra.entity.{Chart, Order, Position}
 import com.github.imomushi8.systra.report._
+import com.github.imomushi8.systra.behavior._
 import com.github.imomushi8.systra.behavior.Tradable
 
 import cats.implicits._
@@ -10,6 +11,7 @@ import cats.effect._
 import fs2._
 
 import org.slf4j.{Logger, LoggerFactory}
+import com.github.imomushi8.systra.behavior.Flag
 
 /** バックテスト用のロガー */
 lazy val globalLogger: Logger = LoggerFactory.getLogger(getClass.getName)
@@ -17,24 +19,24 @@ lazy val globalLogger: Logger = LoggerFactory.getLogger(getClass.getName)
 /** Tradableのバックテスト用インスタンス */
 object BackTest extends Tradable[BTMarket]:
   val initSub = SummarySubReport(0,0,0,0,0)
-  val initSummary = SummaryReport("", 0, initSub, initSub, initSub, 0, 0, 0)
+  val initSummary = SummaryReport("", 0, 0, 0, OK, initSub, initSub, initSub, 0, 0, 0)
   
   /** SummaryReportをStream上で作成する */
-  def makeSummary(traderName: String): Pipe[IO, (PositionReport, Long), SummaryReport] = _
-    .map{ case (record, index) =>
+  def makeSummary(traderName: String, firstCapital: Price): Pipe[IO, (PositionReport, Long, Flag, Price), SummaryReport] = _
+    .map{ case (record, index, flag, capital) =>
       val pl = record.side*(record.closePrice - record.openPrice)*record.size - record.cost
-      (index, record.side, pl, record.cost) /* side, pl, cost */
+      (index, flag, record.side, pl, record.cost, capital) /* side, pl, cost */
     }
-    .fold((initSummary, 0.0, 0.0, 0, 0)) { 
-      case ((currentSummary, currentCapital, currentMax, currentSuccWin, currentSuccLose),
-            (index, side, pl, cost)) =>
-        val nextCapital = currentCapital + pl
+    .fold((initSummary, 0.0, 0.0, 0, 0, 0.0, OK: Flag)) { 
+      case ((currentSummary, currentPL, currentMax, currentSuccWin, currentSuccLose, currentCapital, currentFlag),
+            (index, flag, side, pl, cost, capital)) =>
+        val nextCapital = currentPL + pl
         val nextMax = currentMax max nextCapital
         val (nextSuccWin, nextSuccLose) = 
           if pl > 0 then (currentSuccWin+1, 0)
           else           (0, currentSuccLose+1)
-        val nextSummary = currentSummary ++ (traderName, index, currentCapital, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
-        (nextSummary, nextCapital, nextMax, nextSuccWin, nextSuccLose)
+        val nextSummary = currentSummary ++ (traderName, index, firstCapital, currentCapital, flag, currentPL, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
+        (nextSummary, nextCapital, nextMax, nextSuccWin, nextSuccLose, capital, flag)
     }
     .map(_._1)
 

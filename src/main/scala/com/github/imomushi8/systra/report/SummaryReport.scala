@@ -2,12 +2,17 @@ package com.github.imomushi8.systra.report
 
 /*--------------------------------------------------------------------------------------------*/
 import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.behavior._
+import com.github.imomushi8.systra.behavior.Tradable
 import scala.annotation.tailrec
 /*--------------------------------------------------------------------------------------------*/
 
 /** トレード終了時に行うレポート */
 case class SummaryReport(traderName: String,
                          sampleSize: Long,
+                         firstCapital: Price,
+                         lastCapital: Price,
+                         flag: Flag, 
                          longReport: SummarySubReport,
                          shortReport: SummarySubReport,
                          allReport: SummarySubReport,
@@ -15,50 +20,63 @@ case class SummaryReport(traderName: String,
                          consecutiveWinCount: Int,
                          consecutiveLoseCount: Int) extends Report:
   override val toList: List[String] =
-    List(traderName, sampleSize.toString) ++
+    val interest = lastCapital/firstCapital - 1
+    val drawDownFactor = allReport.pl/maximalDrawDown
+    List(traderName, sampleSize.toString, firstCapital.toString, lastCapital.toString, interest.toString, flag.toString) ++
     longReport.toList ++
     shortReport.toList ++
     allReport.toList ++
-    List(f"$maximalDrawDown%.3f", consecutiveWinCount.toString, consecutiveLoseCount.toString)
+    List(f"$maximalDrawDown%.3f", drawDownFactor.toString, consecutiveWinCount.toString, consecutiveLoseCount.toString)
 
 /*--------------------------------------------------------------------------------------------*/
 
 
 object SummaryReport extends Report:
   extension (current: SummaryReport)
-    def ++ (traderName: String, 
-            sampleSize: Long, 
-            currentCapital:Price, 
-            currentMax:Price, 
-            currentSuccWin:Int, 
-            currentSuccLose:Int,
-            side:Side, 
-            pl:Price, 
-            cost:Price): SummaryReport = 
-      update(current)(traderName, sampleSize, currentCapital, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
+    def ++ (traderName: String,
+            sampleSize: Long,
+            firstCapital: Price,
+            lastCapital: Price,
+            flag: Flag,
+            currentPL: Price, 
+            currentMax: Price, 
+            currentSuccWin: Int, 
+            currentSuccLose: Int,
+            side: Side, 
+            pl: Price, 
+            cost: Price): SummaryReport = 
+      update(current)(traderName, sampleSize, firstCapital, lastCapital, flag, currentPL, currentMax, currentSuccWin, currentSuccLose, side, pl, cost)
 
   def update(current: SummaryReport)
             (traderName: String, 
-             sampleSize: Long, 
-             currentCapital:Price, 
-             currentMax:Price, 
-             currentSuccWin:Int, 
-             currentSuccLose:Int,
-             side:Side, 
-             pl:Price, 
-             cost:Price): SummaryReport =
+             sampleSize: Long,
+             firstCapital: Price,
+             lastCapital: Price,
+             flag: Flag,
+             currentPL: Price, 
+             currentMax: Price, 
+             currentSuccWin: Int, 
+             currentSuccLose: Int,
+             side: Side, 
+             pl: Price, 
+             cost: Price): SummaryReport =
 
     val (nextLongSub, nextShortSub) = 
       if side > 0 then (current.longReport += (pl, cost), current.shortReport)
       else             (current.longReport, current.shortReport += (pl, cost))
-    val nextMDD      = current.maximalDrawDown max (currentMax - currentCapital)
+    val nextMDD      = current.maximalDrawDown max (currentMax - currentPL)
     val nextConsWin  = current.consecutiveWinCount max currentSuccWin
     val nextConsLose = current.consecutiveLoseCount max currentSuccLose
 
-    SummaryReport(traderName, sampleSize, nextLongSub, nextShortSub, nextLongSub + nextShortSub, nextMDD, nextConsWin, nextConsLose)
+    SummaryReport(traderName, sampleSize, firstCapital, lastCapital, flag, nextLongSub, nextShortSub, nextLongSub + nextShortSub, nextMDD, nextConsWin, nextConsLose)
 
   /** PositionReportのListからレポートをまとめる */
-  def makeReport(sampleSize:Int, traderName:String, records:List[PositionReport]): SummaryReport = {
+  def makeReport(sampleSize: Int, 
+                 traderName: String,
+                 records: List[PositionReport],
+                 firstCapital: Price,
+                 lastCapital: Price,
+                 flag: Flag): SummaryReport = {
     /* ロング、ショート、すべてでのSubReport */
     val longReport  = SummarySubReport.makeReport(records.filter(_.side>0))
     val shortReport = SummarySubReport.makeReport(records.filter(_.side<0))
@@ -76,6 +94,9 @@ object SummaryReport extends Report:
     new SummaryReport(
       traderName,
       sampleSize,
+      firstCapital,
+      lastCapital,
+      flag,
       longReport,
       shortReport,
       longReport + shortReport,
@@ -103,8 +124,8 @@ object SummaryReport extends Report:
 
   /** レポート要素を文字列にしたリスト */
   override val toList: List[String] =
-    List("TraderName", "SampleSize") ++
+    List("TraderName", "SampleSize", "FirstCapital", "LastCapital", "Interest", "ShortFailFlag") ++
     SummarySubReport.toList.map("Long " + _) ++
     SummarySubReport.toList.map("Short " + _) ++
     SummarySubReport.toList ++
-    List("MaximalDrawDown", "ConsecutiveWinCount", "ConsecutiveLoseCount")
+    List("MaximalDrawdown", "DrawdownFactor", "ConsecutiveWinCount", "ConsecutiveLoseCount")

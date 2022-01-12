@@ -9,9 +9,9 @@ case class SummarySubReport(winCount: Int,
                             cost: Double) extends Report {
   val tradeCount: Int = winCount + loseCount
   val pl: Double = profit + loss - cost
-  val winRate:Double  = if(tradeCount!=0) 100*winCount/tradeCount else -1
-  val loseRate:Double = if(tradeCount!=0) 100*loseCount/tradeCount else -1
-  val profitFactor: Double = if(loss+cost!=0) profit/(loss+cost) else profit
+  val winRate: Double  = if(tradeCount!=0) winCount * 100.0/tradeCount else -1
+  val loseRate: Double = if(tradeCount!=0) loseCount * 100.0/tradeCount else -1
+  val profitFactor: Double = if(loss+cost!=0) -profit/(loss+cost) else profit
 
   override val toList: List[String] = List(
     tradeCount.toString,

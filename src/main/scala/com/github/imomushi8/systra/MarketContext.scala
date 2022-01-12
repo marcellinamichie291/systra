@@ -11,10 +11,11 @@ import cats.implicits.catsSyntaxFlatMapOps
 import cats.effect.unsafe.implicits.global
 
 
-case class MarketContext[Market](capital   :Price,
-                                 orders    :List[Order],
-                                 positions :List[Position],
-                                 market    :Market)
+case class MarketContext[Market](capital:    Price,
+                                 allCapital: Price, 
+                                 orders:     List[Order],
+                                 positions:  List[Position],
+                                 market:     Market)
                                  
 extension [Market](context: MarketContext[Market])
   def getMarket: IO[Ref[IO, Market]] = Ref.of(context.market)

@@ -31,7 +31,7 @@ object MockBrain:
         else Memory(memory.chartList :+ chart)
 
       val size = 100
-      val expire = chart.datetime.plusMonths(1)
+      val expire = chart.datetime.plusMonths(6)
 
       if context.positions.nonEmpty then
         val settlePosition = context.positions.head
