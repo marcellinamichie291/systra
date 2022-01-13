@@ -11,7 +11,6 @@ import com.github.imomushi8.systra.util._
 import com.github.imomushi8.systra.entity._
 import com.github.imomushi8.systra.Actions._
 import com.github.imomushi8.systra.behavior._
-import org.atnos.eff.memo
 
 inline val tradeRisk = 0.02
 inline val maxLoss = -10000.0

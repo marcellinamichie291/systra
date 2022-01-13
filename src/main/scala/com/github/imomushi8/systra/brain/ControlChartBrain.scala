@@ -110,7 +110,7 @@ object ControlChartBrain:
         else
           // 現在位置から前回高値以上には確率x%, 安値以下にはy%で到達するので、x%(y%)の方が大きいため高値(安値)に待ち伏せする       
           val closes = log(DenseVector(nowChartList.map(_.close)*))
-          val rates = diff(closes)//log(closes(0 until closes.length-1) - closes(1 until closes.length))
+          val rates = diff(closes)
           val mv = breeze.stats.meanAndVariance(rates)
           val T = 60.0
           def x(target:Double) = (math.log(target/chart.close) - (mv.mean - mv.variance/2)*T)/(mv.stdDev*math.sqrt(T))

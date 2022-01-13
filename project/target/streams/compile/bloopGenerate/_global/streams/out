@@ -1,0 +1,4 @@
+[debug] [systra-build] Classpath dependencies List()
+[debug] [systra-build] Dependencies from configurations List()
+[debug] Bloop wrote the configuration of project 'systra-build' to 'C:\workspace_Scala_VSCode\systra\project\.bloop\systra-build.json'
+[success] Generated .bloop\systra-build.json

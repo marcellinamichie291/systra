@@ -51,8 +51,8 @@ object Main extends IOApp:
       ControlChartBrain[BTMarket](t, maxBias, maxUpDown, maxScat))
     //val brains = List((s"$brainName(36 8 8 15)", ControlChartBrain[BTMarket](36, 8, 8, 15)))
     //val brains = for t <- 36 until 108 by 6 yield (s"$brainName($t 8 8 15)", ControlChartBrain[BTMarket](t, 8, 8, 15))
-    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2016_all.csv"
-    val writeCsvPath = s"reports/${brainName}_2016.csv"
+    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2017_all.csv"
+    val writeCsvPath = s"reports/${brainName}_2017.csv"
     val firstCapital = 1_000_000.0 // 100万円
     val leverage = 25.0 // レバレッジ
     val leveragedCapital = firstCapital*leverage

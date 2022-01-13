@@ -16,7 +16,6 @@ import java.time.LocalDateTime
 import fs2._
 import cats.implicits._
 import cats.kernel.Monoid
-import org.atnos.eff.syntax.all._
 
 class BackTestOrderSpec
   extends AnyFlatSpec
