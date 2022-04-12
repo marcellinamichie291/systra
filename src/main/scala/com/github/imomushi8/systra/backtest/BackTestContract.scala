@@ -1,7 +1,7 @@
 package com.github.imomushi8.systra.backtest
 
-import com.github.imomushi8.systra.util.{isSTOP_LIMIT, isContracted}
-import com.github.imomushi8.systra.entity._
+import com.github.imomushi8.systra.core.util.{isSTOP_LIMIT, isContracted}
+import com.github.imomushi8.systra.core.entity._
 
 import cats.implicits._
 

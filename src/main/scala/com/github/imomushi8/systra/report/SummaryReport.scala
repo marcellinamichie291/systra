@@ -1,9 +1,9 @@
 package com.github.imomushi8.systra.report
 
 /*--------------------------------------------------------------------------------------------*/
-import com.github.imomushi8.systra.util._
-import com.github.imomushi8.systra.behavior._
-import com.github.imomushi8.systra.behavior.Tradable
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.market._
 import scala.annotation.tailrec
 /*--------------------------------------------------------------------------------------------*/
 

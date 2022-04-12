@@ -1,11 +1,12 @@
 package com.github.imomushi8.systra.backtest
 
-import cats.effect.{ExitCode, IO}
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.util._
-import com.github.imomushi8.systra.entity._
+
 import com.github.imomushi8.systra.report._
-import com.github.imomushi8.systra.behavior.MarketBehavior
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.market.{MarketBehavior, MarketContext}
+
+import cats.effect.{ExitCode, IO}
 import com.typesafe.scalalogging.LazyLogging
 import java.time.LocalDateTime
 
@@ -103,7 +104,7 @@ object BTMarket extends LazyLogging:
       logger.debug(END, "Update Chart")
       next
 
-    override def checkContract(current: BTMarket): IO[(BTMarket, Vector[PositionReport])] = current match 
+    override def checkContract(current: BTMarket): IO[(BTMarket, Vector[PositionTransaction])] = current match 
       case BTMarket(capital, orders, positions, sequenceId, chart) => IO {
         logger.debug(START, "Check Contract")
 
@@ -119,7 +120,7 @@ object BTMarket extends LazyLogging:
         /* Order, Positionそれぞれについて削除・追加するものを取得する */
         val (nextOrders, nextPositions, reports) = checkAllContract(chart, nonExpiredOrders, positions)
       
-        val pl = (reports map { case PositionReport(_, _, side, size, openPrice, closePrice, cost) => 
+        val pl = (reports map { case PositionTransaction(_, _, side, size, openPrice, closePrice, cost) => 
           side*(closePrice-openPrice)*size + cost }).sum
         
         val next = BTMarket(capital + pl + cancelPl, nextOrders, nextPositions, sequenceId, chart)

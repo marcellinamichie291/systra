@@ -1,8 +1,8 @@
 package com.github.imomushi8.systra.backtest
 
 import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.util.{isBUY, ID, Size, TimeStamp}
-import com.github.imomushi8.systra.entity._
+import com.github.imomushi8.systra.core.util.isBUY
+import com.github.imomushi8.systra.core.entity._
 
 import scala.language.implicitConversions
 implicit def toStr(i: Int): String = i.toString
