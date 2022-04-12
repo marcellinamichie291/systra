@@ -31,17 +31,17 @@ import cats.kernel.Monoid
 /*
  * ポジションのすべてを閉じるのではなく、sizeの差分だけ決済する処理を行うシストレの新しいフレームワークが欲しい
  * FX等の信用取引の場合は注文ID等で管理すると思われるため、現在作成中の構成で行う。
- */ 
+ */
 
 object Main extends IOApp:
 
   given IttoCSVFormat = IttoCSVFormat.default
   given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
 
-  override def run(args: List[String]): IO[ExitCode] =
-    val brainName="ControlChartBrain"
-    type M = ControlChartBrain.Memory
-    val brains = for
+  type M = ControlChartBrain.Memory
+
+  val brainName="ControlChartBrain"
+  val brains = { for
       t <- 24 to 96 by 24
       maxBias <- 10 to 55 by 15
       maxUpDown <- 10 to 55 by 15
@@ -49,14 +49,17 @@ object Main extends IOApp:
     yield (
       s"$brainName($t $maxBias $maxUpDown $maxScat)", 
       ControlChartBrain[BTMarket](t, maxBias, maxUpDown, maxScat))
-    //val brains = List((s"$brainName(36 8 8 15)", ControlChartBrain[BTMarket](36, 8, 8, 15)))
-    //val brains = for t <- 36 until 108 by 6 yield (s"$brainName($t 8 8 15)", ControlChartBrain[BTMarket](t, 8, 8, 15))
-    val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2017_all.csv"
-    val writeCsvPath = s"reports/${brainName}_2017.csv"
-    val firstCapital = 1_000_000.0 // 100万円
-    val leverage = 25.0 // レバレッジ
-    val leveragedCapital = firstCapital*leverage
-
+    //List((s"$brainName(36 8 8 15)", ControlChartBrain[BTMarket](36, 8, 8, 15)))
+    //for t <- 36 until 108 by 6 yield (s"$brainName($t 8 8 15)", ControlChartBrain[BTMarket](t, 8, 8, 15))
+  }
+      
+  val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2016_all.csv"
+  val writeCsvPath = s"reports/${brainName}_2016_4.csv"
+  val firstCapital = 1_000_000.0 // 100万円
+  val leverage = 25.0 // レバレッジ
+  val leveragedCapital = firstCapital*leverage
+  
+  override def run(args: List[String]): IO[ExitCode] =
     /* Chartを流すStream */
     val chartStream = csvFromFileStream[OHLCV](readCsvPath, skipHeader = false)
 
@@ -77,17 +80,8 @@ object Main extends IOApp:
             val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
             Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
         }
-        //.through(SystemTrade.downSampling(head))
-        //.take(1000)
-        .through(SystemTrade.backtestStream[M](brains, leveragedCapital, head))
-
-      /*
-      stream
-        .map(_.toString)
-        .printlns
-        .compile
-        .drain
-      */
+        .through(SystemTrade.downSampling(head))
+        .through(SystemTrade.backtest[M](brains, leveragedCapital, head))
 
       (Stream.emit[IO, String](SummaryReport.toList.mkString(",")) ++ stream)
         .intersperse(System.lineSeparator)

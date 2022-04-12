@@ -6,7 +6,7 @@
 /.idea/
 /null/
 
-/logs/
 /csv_chart/
-/reports/
 logback.xml
+!/project/Dependencies.scala
+!/project/build.properties

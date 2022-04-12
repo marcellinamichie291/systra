@@ -25,14 +25,8 @@ val gauss = Gaussian(0, 1)
 object ControlChartBrain:
   case class Memory(chartList: List[Chart], cc: Option[ControlChart], prevOHLCV: Chart, orderDT: TimeStamp)
 
-  given Monoid[Memory] with
-    override def empty: Memory = Memory(Nil, None, Chart(0,0,0,0,0,LocalDateTime.MIN),LocalDateTime.MIN)
-    override def combine(x: Memory, y: Memory): Memory = Memory(
-      x.chartList ++ y.chartList,
-      y.cc,
-      y.prevOHLCV,
-      y.orderDT
-    )
+  given Initial[Memory] with
+    override def empty(): Memory = Memory(Nil, None, Chart(0,0,0,0,0,LocalDateTime.MIN),LocalDateTime.MIN)
 
   def apply[Market](expiredHour: Int=24,
                     maxBias: Int=25,

@@ -21,9 +21,14 @@ object Dependencies {
         "ch.qos.logback"              %  "logback-classic"  % "1.2.6",
         "com.typesafe.scala-logging"  %% "scala-logging"    % "3.9.4",
 
-        // mgo, breezeをコメントアウトしてimport buildした後、コメントアウトを外してimport buildをする
+        // breezeをコメントアウトしてimport buildする
         //"org.scalanlp" %% "breeze" % "2.0.1-RC2", // これを削除すればbreezeダウンロードが上手くいった
         "org.openmole" %% "mgo" % "3.55",
+
+        // 奇跡的な采配でこの状態がビルド可能な状態になっている
+        //"org.apache.spark" % "spark-core_2.13" % "3.2.0",
+        //"org.apache.spark" % "spark-mllib_2.13" % "3.2.0" % "provided",
+        //"org.apache.spark" % "spark-sql_2.13" % "3.2.0" % "provided",
 
         "org.scalatest"     %% "scalatest"        % "3.2.10"    % Test,
         "org.scalatestplus" %% "scalacheck-1-15"  % "3.2.10.0"  % Test,

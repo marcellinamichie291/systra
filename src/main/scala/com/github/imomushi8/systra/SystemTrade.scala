@@ -15,6 +15,9 @@ import fs2._
 import fs2.io.file.{Files, Path}
 
 object SystemTrade:
+  /** ダウンサンプリングを行う
+   * TODO: 任意の時間間隔でのダウンサンプリングを可能にする
+   */
   def downSampling(head:Chart):Pipe[IO, Chart, Chart] = _
     .scan(head.asLeft[(Chart, Chart)]) {
       // Leftであれば更新していく
@@ -30,19 +33,14 @@ object SystemTrade:
     }
     .collect { case (Right((chart, _))) => chart}
 
-  def backtestStream[Memory:Monoid](brains:       Seq[(String, Brain[BTMarket, Memory])],
-                                    firstCapital: Price,
-                                    firstChart:   Chart) =
-    val initMarket = BTMarket(firstCapital, Nil, Nil, 1, firstChart)
-    val initMemory = Monoid[Memory].empty
+  def backtest[Memory:Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
+                               firstCapital: Price,
+                               firstChart:   Chart) =
+    given initMarket: Initial[BTMarket] = BTMarket.initial(firstCapital, firstChart)
     val pipes = brains.map { case (name, brain) => (chartStream: Stream[IO, Chart]) => 
       chartStream
-        .through(BackTest(brain, initMarket, initMemory))
-        .zipWithIndex
-        .flatMap { case ((reports, flag, capital) , index) => Stream( (reports.map{r=>(r.asInstanceOf[PositionReport], index, flag, capital)})* )}
-        .through(BackTest.makeSummary(name, firstCapital))
+        .through(BackTest(brain))
+        .through(BackTest.make(name, firstCapital))
         .map(_.toString)
     }
-
     (chartStream: Stream[IO, Chart]) => chartStream.broadcastThrough(pipes*)
-

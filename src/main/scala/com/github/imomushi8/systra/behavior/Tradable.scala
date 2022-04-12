@@ -15,6 +15,8 @@ import cats.effect.IO
 import cats.effect.implicits._
 import cats.effect.unsafe.implicits.global
 import fs2._
+import cats.syntax.UniteOps
+import com.github.imomushi8.systra.backtest.BTMarket
 
 trait Flag
 case object OK extends Flag
@@ -22,44 +24,67 @@ case class  NG(msg: String) extends Flag:
   override val toString: String = "NG"
 
 trait Tradable[Market](using MarketBehavior[Market]):
-  def apply[Memory](brain:      Brain[Market, Memory],
-                    initMarket: Market,
-                    initMemory: Memory): Pipe[IO, Chart, (Vector[Report], Flag, Price)] = {
+  def apply[Memory: Initial](brain: Brain[Market, Memory])
+                             (using im: Initial[Market]): Pipe[IO, Chart, (Market, Memory, TradeState)] = {
     val f = trade(brain)
-    stream => stream
-      .evalScan(((initMarket, initMemory, OK: Flag), Vector[Report]())) { (current, chart) => f(chart).run(current._1) }
-      .map { case ((market, memory, flag), logs) => 
-        /*
-        val context = market.context
-        val strOrder=context.orders.headOption.map(o=>s"Order is $o")
-        val strPosition=context.positions.headOption.map(p=>s"Positions is $p")
-        println(s"Capital is ${context.capital}, AllCapital is ${context.allCapital}, $strOrder, $strPosition")
-        */
-        (logs, flag, market.context.allCapital) }
+    val initMarket = im.empty()
+    val initState = TradeState.initial(initMarket.context.capital).empty()
+    val init = (initMarket, Initial[Memory](), initState)
+    stream => stream.evalScan(init) { case (current, chart) => f(chart).runS(current) }
+  }
+
+  def trade[Memory](brain: Brain[Market, Memory])(chart: Chart): StateT[IO, (Market, Memory, TradeState), Vector[PositionReport]] = 
+    for
+      ?            <- updateChart(chart)
+      transactions <- checkContract[Memory]
+      action       <- execAction(chart, brain)
+      ?            <- updateFlag(action)
+      ?            <- updateTradeState(transactions)
+    yield transactions
+
+  private def updateChart[Memory](chart: Chart): StateT[IO, (Market, Memory, TradeState), Unit] = StateT.modify {
+    case (market, memory, state) => (market := chart, memory, state.copy(sampleSize=state.sampleSize+1))
   }
   
-  def trade[Memory](brain: Brain[Market, Memory])(chart: Chart): StateT[IO, (Market, Memory, Flag), Vector[Report]] = 
-    for
-      ?       <- updateChart(chart)
-      reports <- checkContract[Memory]
-      action  <- execAction(chart, brain)
-      ?       <- action match
-                  case Next(market, memory) => StateT.set[IO, (Market, Memory, Flag)]((market, memory, OK))
-                  case End(endMsg)          => StateT.modify[IO, (Market, Memory, Flag)](s=>(s._1, s._2, NG(endMsg)))
-    yield reports
-
-  def checkContract[Memory]: StateT[IO, (Market, Memory, Flag), Vector[Report]] = StateT { case (market, memory, flag) => 
-    market.contract.map { case (nextMarket, logs) => ((nextMarket, memory, flag), logs.toVector)}
+  private def checkContract[Memory]: StateT[IO, (Market, Memory, TradeState), Vector[PositionReport]] = StateT { 
+    case (market, memory, state) => 
+      market.contract.map { case (nextMarket, transactions) => ((nextMarket, memory, state), transactions.toVector) }
   }
 
-  def updateChart[Memory](chart: Chart): StateT[IO, (Market, Memory, Flag), Unit] = StateT.modify {
-    case (market, memory, flag) => (market := chart, memory, flag)
-  }
-
-  def execAction[Memory](chart: Chart, brain: Brain[Market, Memory]): StateT[IO, (Market, Memory, Flag), TradeAction[Market, Memory]] = 
-    StateT.inspectF { case (market, memory, flag) => flag match
+  private def execAction[Memory](chart: Chart, brain: Brain[Market, Memory]): StateT[IO, (Market, Memory, TradeState), TradeAction[Market, Memory]] = StateT.inspectF { 
+    case (market, memory, state) => state.flag match
       case OK      => brain(chart, market.context, memory)
       case NG(msg) => IO(End(msg))
-    }
+  }
 
-  
+  private def updateFlag[Memory](action: TradeAction[Market, Memory]): StateT[IO, (Market, Memory, TradeState), Unit] = StateT.modify { 
+    case (currentMarket, currentMemory, currentState) =>
+      action match
+          case Next(nextMarket, nextMemory) => (   nextMarket,    nextMemory, currentState.copy(flag=OK))
+          case End(endMsg)                  => (currentMarket, currentMemory, currentState.copy(flag=NG(endMsg)))
+  }
+
+  private def updateTradeState[Memory](transactions: Vector[PositionReport]): StateT[IO, (Market, Memory, TradeState), Unit] = StateT.modify { 
+    case (currentMarket, currentMemory, currentState) =>
+    val init = (currentState.buyRecord, currentState.sellRecord, currentState.capital, currentState.maxCapital, currentState.consecutiveWins, currentState.consecutiveLoses)
+    
+    val sortedTransactions = transactions.sortBy(_.openTime)
+    val (buyRecord, sellRecord, capital, maxCapital, consWin, consLose) = 
+      sortedTransactions
+        .foldLeft(init) {
+          case ((currentBuyRecord, currentSellRecord, currentCapital, currentMax, currentConsWin, currentConsLose),
+                PositionReport(_, _, side, size, openPrice, closePrice, cost)) =>
+            val pl          = side*(closePrice-openPrice)*size + cost
+            val nextCapital = currentCapital + pl
+            val nextMax     = currentMax max nextCapital
+            val (nextConsWin, nextConsLose) = if pl > 0 then (currentConsWin+1,  0) else (0, currentConsLose+1)
+            val (nextBuyRecord, nextSellRecord) =
+              if side == BUY then (currentBuyRecord += (pl, cost), currentSellRecord)
+              else                (currentBuyRecord, currentSellRecord += (pl, cost))
+
+            (nextBuyRecord, nextSellRecord, nextCapital, nextMax, nextConsWin, nextConsLose)
+        }
+
+    val nextState = TradeState(currentState.sampleSize, currentState.flag, buyRecord, sellRecord, capital, maxCapital, consWin, consLose, sortedTransactions)
+    (currentMarket, currentMemory, nextState)
+  }

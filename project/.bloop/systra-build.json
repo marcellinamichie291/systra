@@ -19,7 +19,7 @@
         "classpath": [
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\sbt\\1.6.1\\sbt-1.6.1.jar",
             "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-library.jar",
-            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.12\\sbt-bloop-1.4.12.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.13\\sbt-bloop-1.4.13.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\main_2.12\\1.6.1\\main_2.12-1.6.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\io_2.12\\1.6.0\\io_2.12-1.6.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\net\\java\\dev\\jna\\jna\\5.8.0\\jna-5.8.0.jar",
@@ -124,9 +124,10 @@
             ],
             "jars": [
                 "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-library.jar",
+                "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\jline.jar",
                 "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-compiler.jar",
                 "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-reflect.jar",
-                "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-xml_2.12-1.0.6.jar"
+                "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-xml_2.12.jar"
             ],
             "setup": {
                 "order": "mixed",
@@ -214,17 +215,17 @@
                 {
                     "organization": "ch.epfl.scala",
                     "name": "sbt-bloop",
-                    "version": "1.4.12",
+                    "version": "1.4.13",
                     "configurations": "default",
                     "artifacts": [
                         {
                             "name": "sbt-bloop",
-                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.12\\sbt-bloop-1.4.12.jar"
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.13\\sbt-bloop-1.4.13.jar"
                         },
                         {
                             "name": "sbt-bloop",
                             "classifier": "sources",
-                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.12\\sbt-bloop-1.4.12-sources.jar"
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.13\\sbt-bloop-1.4.13-sources.jar"
                         }
                     ]
                 },

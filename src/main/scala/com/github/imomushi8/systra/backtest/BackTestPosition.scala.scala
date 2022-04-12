@@ -21,7 +21,7 @@ def settle(chart: Chart, positions: List[Position])(contractedOrder: Order): Lis
   }
 
 /** 決済済みポジションからPositionReportを作成 */
-def makeReport(contractedPositions: List[(Position, Price, TimeStamp)]): Vector[Report] = contractedPositions.map { 
+def makeReport(contractedPositions: List[(Position, Price, TimeStamp)]): Vector[PositionReport] = contractedPositions.map { 
   case (Position(openTime, id, side, price, size), closePrice, closeTime) =>
     PositionReport(openTime, closeTime, side, size, price, closePrice, 0)
 }.toVector
