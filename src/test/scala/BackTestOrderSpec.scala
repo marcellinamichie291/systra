@@ -1,9 +1,13 @@
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.util._
-import com.github.imomushi8.systra.entity._
-import com.github.imomushi8.systra.report._
-import com.github.imomushi8.systra.brain._
+import app.brain.MockBrain
 import com.github.imomushi8.systra.backtest._
+import com.github.imomushi8.systra.backtest.BackTestOrder._
+import com.github.imomushi8.systra.backtest.BackTestPosition._
+import com.github.imomushi8.systra.backtest.BackTestContract._
+
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.action._
+import com.github.imomushi8.systra.core.market._
+import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.backtest.BTMarket._
 
 import org.scalacheck.{Arbitrary, Gen}

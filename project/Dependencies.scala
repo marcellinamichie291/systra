@@ -17,10 +17,15 @@ object Dependencies {
         "co.fs2"        %% "fs2-io"               % fs2Version,
         "co.fs2"        %% "fs2-reactive-streams" % fs2Version,
         "co.fs2"        %% "fs2-scodec"           % fs2Version,
+        
         "com.github.gekomad"          %% "itto-csv"         % "2.0.0",
         "ch.qos.logback"              %  "logback-classic"  % "1.2.6",
         "com.typesafe.scala-logging"  %% "scala-logging"    % "3.9.4",
 
+        "com.softwaremill.sttp.client3" %% "core" % "3.5.1",
+        "com.softwaremill.sttp.client3" %% "fs2" % "3.5.1",
+        "com.softwaremill.sttp.client3" %% "async-http-client-backend-fs2" % "3.5.1",
+        
         // breezeをコメントアウトしてimport buildする
         //"org.scalanlp" %% "breeze" % "2.0.1-RC2", // これを削除すればbreezeダウンロードが上手くいった
         "org.openmole" %% "mgo" % "3.55",

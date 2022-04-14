@@ -6,6 +6,9 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.market.{MarketBehavior, MarketContext}
 
+import com.github.imomushi8.systra.backtest.BackTestOrder._
+import com.github.imomushi8.systra.backtest.BackTestContract._
+
 import cats.effect.{ExitCode, IO}
 import com.typesafe.scalalogging.LazyLogging
 import java.time.LocalDateTime

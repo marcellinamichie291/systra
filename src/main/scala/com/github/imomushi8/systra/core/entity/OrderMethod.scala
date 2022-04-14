@@ -2,7 +2,6 @@ package com.github.imomushi8.systra.core.entity
 
 /*--------------------------------------------------------------------------------------------*/
 import cats.kernel.Monoid
-import com.github.imomushi8.systra.util.{ID, Price, Side}
 /*--------------------------------------------------------------------------------------------*/
 
 

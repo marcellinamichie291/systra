@@ -15,19 +15,20 @@ import cats.effect.unsafe.implicits.global
 import fs2._
 
 /**
- * 新たな市場を定義した場合に 
+ * 新たな市場を定義した場合に被せることで、トレード可能にするための型クラス
  */
 trait Tradable[Market](using MarketBehavior[Market]):
-  def apply[Memory: Initial](brain: Brain[Market, Memory])
-                             (using im: Initial[Market]): Pipe[IO, Chart, (Market, Memory, TradeState)] = {
-    val f = trade(brain)
+  def trade[Memory: Initial](brain: Brain[Market, Memory])
+                            (using im: Initial[Market]): Pipe[IO, Chart, (Market, Memory, TradeState)] = {
+    val f = action(brain)
     val initMarket = im.empty()
     val initState = TradeState.initial(initMarket.context.capital).empty()
     val init = (initMarket, Initial[Memory](), initState)
     stream => stream.evalScan(init) { case (current, chart) => f(chart).runS(current) }
   }
 
-  def trade[Memory](brain: Brain[Market, Memory])(chart: Chart): StateT[IO, (Market, Memory, TradeState), Vector[PositionTransaction]] = 
+  def action[Memory](brain: Brain[Market, Memory])
+                    (chart: Chart): StateT[IO, (Market, Memory, TradeState), Vector[PositionTransaction]] = 
     for
       ?            <- updateChart(chart)
       transactions <- checkContract[Memory]
@@ -45,7 +46,8 @@ trait Tradable[Market](using MarketBehavior[Market]):
       market.contract.map { case (nextMarket, transactions) => ((nextMarket, memory, state), transactions.toVector) }
   }
 
-  private def execAction[Memory](chart: Chart, brain: Brain[Market, Memory]): StateT[IO, (Market, Memory, TradeState), TradeAction[Market, Memory]] = StateT.inspectF { 
+  private def execAction[Memory](chart: Chart, 
+                                 brain: Brain[Market, Memory]): StateT[IO, (Market, Memory, TradeState), TradeAction[Market, Memory]] = StateT.inspectF { 
     case (market, memory, state) => state.flag match
       case OK      => brain(chart, market.context, memory)
       case NG(msg) => IO(End(msg))

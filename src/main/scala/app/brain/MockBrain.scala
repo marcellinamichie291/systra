@@ -6,11 +6,10 @@ import cats.implicits.catsSyntaxFlatMapOps
 import cats.effect.IO
 import cats.implicits.catsSyntaxOptionId
 
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.util._
-import com.github.imomushi8.systra.entity._
-import com.github.imomushi8.systra.Actions._
-import com.github.imomushi8.systra.behavior._
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.action._
+import com.github.imomushi8.systra.core.market._
+import com.github.imomushi8.systra.core.entity._
 
 object MockBrain:
   case class Memory(chartList: List[Chart])
