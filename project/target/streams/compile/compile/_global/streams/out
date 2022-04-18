@@ -1,0 +1,7 @@
+[error] C:\workspace_Scala_VSCode\systra\project\Dependencies.scala:36:9: ')' expected but string literal found.
+[error]         "org.openmole" %% "mgo" % "3.55",
+[error]         ^
+[error] C:\workspace_Scala_VSCode\systra\project\Dependencies.scala:64:5: ';' expected but ')' found.
+[error]     )
+[error]     ^
+[error] two errors found

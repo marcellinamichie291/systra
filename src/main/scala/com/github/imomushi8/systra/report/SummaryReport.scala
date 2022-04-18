@@ -70,10 +70,10 @@ object SummaryReport extends Report:
 
     SummaryReport(traderName, sampleSize, firstCapital, lastCapital, flag, nextLongSub, nextShortSub, nextLongSub + nextShortSub, nextMDD, nextConsWin, nextConsLose)
 
-  /** PositionReportのListからレポートをまとめる */
+  /** PositionTransactionのListからレポートをまとめる */
   def makeReport(sampleSize: Int, 
                  traderName: String,
-                 records: List[PositionReport],
+                 records: List[PositionTransaction],
                  firstCapital: Price,
                  lastCapital: Price,
                  flag: Flag): SummaryReport = {

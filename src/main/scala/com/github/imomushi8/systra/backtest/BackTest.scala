@@ -17,17 +17,19 @@ import com.github.gekomad.ittocsv.parser.IttoCSVFormat
 import deriving.Mirror.ProductOf
 
 /** Tradableのバックテスト用インスタンス */
-object BackTest extends Tradable[BTMarket]:
-  val initSub = SummarySubReport(0,0,0,0,0)
-  val initSummary = SummaryReport("", 0, 0, 0, OK, initSub, initSub, initSub, 0, 0, 0)
-
-  def apply[Memory: Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
-                             firstCapital: Price,
-                             readCsvPath:  String) = new BackTestBegin(brains, firstCapital, readCsvPath)
+class BackTest[Memory: Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
+                                firstCapital: Price) extends Tradable[BTMarket]:
+  /** BackTestの開始メソッド */
+  def begin[Csv](readCsvPath:  String)
+                  (csvToChart:   Csv => Chart)
+                  (using p:      ProductOf[Csv],
+                         d:      Decoder[List[String], p.MirroredElemTypes],
+                         i:      IttoCSVFormat): BackTestOps[Memory] = 
+    BackTestOps[Memory](BackTestStream[Csv](readCsvPath, csvToChart).begin())
   
-  def summerize[Memory:Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
-                                firstCapital: Price,
-                                firstChart:   Chart) =
+  def summerize[Memory:Initial](firstChart: Chart) =
+    val initSub = SummarySubReport(0,0,0,0,0)
+    val initSummary = SummaryReport("", 0, 0, 0, OK, initSub, initSub, initSub, 0, 0, 0)
     given initMarket: Initial[BTMarket] = BTMarket.initial(firstCapital, firstChart)
     brains.map { case (name, brain) => (chartStream: Stream[IO, Chart]) => 
       chartStream
@@ -43,29 +45,16 @@ object BackTest extends Tradable[BTMarket]:
         }
     }
 
-  class BackTestBegin[Memory: Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
-                                     firstCapital: Price,
-                                     readCsvPath:  String):
-    /** BackTestの開始メソッド */
-    def begin[Csv](csvToChart:   Csv => Chart)
-                  (using p:      ProductOf[Csv],
-                        d:      Decoder[List[String], p.MirroredElemTypes],
-                        i:      IttoCSVFormat): BackTestOps[Memory] = 
-      BackTestOps[Memory](brains, firstCapital, BackTestStream[Csv](readCsvPath, csvToChart).begin())
 
-
-  class BackTestOps[Memory: Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
-                                     firstCapital: Price,
-                                     stream:       Stream[IO, Chart]):
+  class BackTestOps[Memory: Initial](stream: Stream[IO, Chart]):
     /** ダウンサンプリング */
-    def downSampling(): BackTestOps[Memory] = new BackTestOps(
-      brains, firstCapital, stream.head >>= { head => stream.through(ChartStream.downSampling(head)) }
+    def downSampling(): BackTestOps[Memory] = new BackTestOps(stream.head >>= { head => stream.through(ChartStream.downSampling(head)) }
     )
 
     /** BackTestの終了メソッド */
     def end(writeCsvPath: String) = 
       val summaryStream = stream.head >>= { head => stream
-        .broadcastThrough(summerize[Memory](brains, firstCapital, head)*)
+        .broadcastThrough(summerize[Memory](head)*)
         .map(_.toString)
       }
       
@@ -75,3 +64,6 @@ object BackTest extends Tradable[BTMarket]:
       .intersperse(System.lineSeparator)
       .through(text.utf8.encode)
       .through(Files[IO].writeAll(Path(writeCsvPath)))
+      .compile
+      .drain
+      .>> { IO.println(s"Done Write CSV: $writeCsvPath") }

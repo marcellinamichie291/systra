@@ -1,5 +1,11 @@
 package com.github.imomushi8.systra.report
 
+/*--------------------------------------------------------------------------------------------*/
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.market._
+import scala.annotation.tailrec
+/*--------------------------------------------------------------------------------------------*/
 
 /** 勝ち数、利益、費用などをまとめたもの */
 case class SummarySubReport(winCount: Int,
@@ -45,7 +51,7 @@ extension (sub:SummarySubReport)
 object SummarySubReport extends Report {
 
   /** PositionRecordのListからレポートをまとめる */
-  def makeReport(records:List[PositionReport]): SummarySubReport = {
+  def makeReport(records:List[PositionTransaction]): SummarySubReport = {
     val plList:List[Double] = records.map( record =>
       record.side*(record.closePrice - record.openPrice)*record.size )
     val profits = plList.filter(_>=0)

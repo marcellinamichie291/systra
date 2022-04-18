@@ -12,11 +12,11 @@ import com.github.gekomad.ittocsv.parser.IttoCSVFormat
 import deriving.Mirror.ProductOf
 import java.time.LocalDateTime
 
-final case class BackTestStream[Csv](filePath:   String,
-                                     csvToChart: Csv => Chart)
-                                    (using p:    ProductOf[Csv],
-                                           d:    Decoder[List[String], p.MirroredElemTypes],
-                                           i:    IttoCSVFormat) extends ChartStream:
+class BackTestStream[Csv](filePath:   String,
+                          csvToChart: Csv => Chart)
+                         (using p:    ProductOf[Csv],
+                                d:    Decoder[List[String], p.MirroredElemTypes],
+                                i:    IttoCSVFormat) extends ChartStream:
   def begin(): Stream[IO, Chart] =
     val chartStream = csvFromFileStream[Csv](filePath, skipHeader = false)
     
