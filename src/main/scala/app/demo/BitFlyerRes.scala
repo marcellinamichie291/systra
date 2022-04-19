@@ -2,7 +2,7 @@ package app.demo
 
 import cats.implicits._
 
-import io.circe.{Json, Decoder, HCursor, DecodingFailure}
+import io.circe.{Json, Encoder, Decoder}
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import java.time.LocalDateTime
@@ -18,6 +18,8 @@ object BitFlyerRes:
   given resResultDecoder:     Decoder[Result]     = deriveDecoder
   given resErrorDecoder:      Decoder[Error]      = deriveDecoder
   given resExecutionsDecoder: Decoder[Executions] = deriveDecoder
+
+  given messageEncoder: Encoder[Message] = deriveEncoder
 
   case class Error(jsonrpc: String,
                    id:      Int, 

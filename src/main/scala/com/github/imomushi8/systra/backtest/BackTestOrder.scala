@@ -39,9 +39,9 @@ object BackTestOrder extends LazyLogging:
 
     /** 単一注文をOrderにする */
     def makeChildOrder(childId     :ID,
-                      childMethod :ChildOrderMethod,
-                      parentId    :ID,
-                      brotherId   :ID): Order = childMethod match
+                       childMethod :ChildOrderMethod,
+                       parentId    :ID,
+                       brotherId   :ID): Order = childMethod match
       case LIMIT(side, price, positionId) => 
         check(positionId)
         val (validPrice, isMarket) = // 気配値を超えた注文はMARKET注文に変更する

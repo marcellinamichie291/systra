@@ -12,47 +12,35 @@ import app.demo._
 
 import mgo.evolution._
 
-import java.time.LocalDateTime
-import concurrent.duration.DurationInt
-
 import cats.implicits._
 import cats.effect._
 import fs2._
-import fs2.concurrent._
-import fs2.io.file.{Files, Path}
 
-import com.github.gekomad.ittocsv.parser.io.FromFile.csvFromFileStream
-import com.github.gekomad.ittocsv.core.Types.implicits._
-import com.github.gekomad.ittocsv.core.ToCsv
-import com.github.gekomad.ittocsv.core.ToCsv._
-import com.github.gekomad.ittocsv.core.FromCsv.Decoder
-import com.github.gekomad.ittocsv.parser.{IttoCSVFormat, StringToCsvField}
 
 object Main extends IOApp:
-  import sttp.capabilities.fs2.Fs2Streams
-  import sttp.client3._
-  import sttp.client3.asynchttpclient.fs2.AsyncHttpClientFs2Backend
-  import sttp.ws.{WebSocket, WebSocketFrame}
-
   override def run(args: List[String]): IO[ExitCode] = for
     ?   <- IO.println("start")
-    res <- bftest()
+    res <- bfDemo()
     ?   <- IO.println("end")
   yield
     ExitCode.Success
     
     
-  def bftest() = BitFlyer[M](
+  def bfDemo() = BitFlyer[M](
     brains, 
     leveragedCapital, 
     BITFLYER_API_KEY, 
     BITFLYER_API_SECRET, 
-    BITFLYER_PUBLIC_CHANNELS
-    )
+    BITFLYER_PUBLIC_CHANNELS.head)
     .begin()
     .end()
 
   def backtest() = 
+    import com.github.gekomad.ittocsv.core.Types.implicits._
+    import com.github.gekomad.ittocsv.core.ToCsv._
+    import com.github.gekomad.ittocsv.parser.IttoCSVFormat
+    import java.time.LocalDateTime
+
     given IttoCSVFormat = IttoCSVFormat.default
     given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
     

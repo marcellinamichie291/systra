@@ -4,7 +4,10 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.backtest._
 import app.brain._
 
-object Envs {
+import sttp.client3._
+
+object Envs:
+  val BITFLYER_WS_URL = uri"wss://ws.lightstream.bitflyer.com/json-rpc"
   val BITFLYER_API_KEY = "MxwMqUeSC1Nz9xByQ8Ujk3"
   val BITFLYER_API_SECRET = "F8rQyKwkzP4ZAO1Eu3+1SKOTgy73/kCHO5SB0JHaWHU="
   val BITFLYER_PUBLIC_CHANNELS = List("lightning_executions_BTC_JPY")
@@ -31,4 +34,3 @@ object Envs {
   
   val readCsvPath = "csv_chart/USDJPY_2015_2021/USDJPY_2016_all.csv"
   val writeCsvPath = s"reports/${brainName}_2016_5.csv"
-}

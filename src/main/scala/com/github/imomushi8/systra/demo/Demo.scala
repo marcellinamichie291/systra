@@ -25,7 +25,7 @@ trait Demo[Memory: Initial](brains:       Seq[(String, Brain[BTMarket, Memory])]
                             firstCapital: Price,
                             uri:          Uri) extends Tradable[BTMarket]:
 
-  def wsPipe: Pipe[IO, WebSocketFrame.Data[?], WebSocketFrame]
+  def callback(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, WebSocketFrame]
 
   def summerize[Memory:Initial](brains:       Seq[(String, Brain[BTMarket, Memory])],
                                 firstCapital: Price,
@@ -57,7 +57,7 @@ trait Demo[Memory: Initial](brains:       Seq[(String, Brain[BTMarket, Memory])]
       .resource[IO]()
       .use { backend =>
         basicRequest
-          .response(asWebSocketStreamAlways(Fs2Streams[IO])(wsPipe))
+          .response(asWebSocketStreamAlways(Fs2Streams[IO])(callback))
           .get(uri)
           .send(backend)
       }

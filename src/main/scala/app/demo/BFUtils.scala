@@ -1,25 +1,29 @@
 package app.demo
 
-import io.circe.{Encoder, Decoder, DecodingFailure}
-import io.circe.generic.semiauto._
+import app.demo.BitFlyerRes.ExecutionInfo
+
+import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.util._
+
 import io.circe.syntax._
-import io.circe.parser._
-
-import sttp.model.Uri
-import sttp.client3._
-import sttp.client3.asynchttpclient.fs2.AsyncHttpClientFs2Backend
-import sttp.capabilities.fs2.Fs2Streams
 import sttp.ws.{WebSocket, WebSocketFrame}
-
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.apache.commons.codec.binary.Hex
+import java.time.LocalDateTime
+import java.time.ZonedDateTime
+import java.time.ZoneId
+import java.time.Instant
 
 object BFUtils {
+  case class ConnectionState(passAuth: Boolean, 
+                           isSubscribed: Boolean,
+                           tickers: Seq[ExecutionInfo])
+
+  given Initial[ConnectionState] = new Initial { def empty() = ConnectionState(false,false,Nil) }
+
   private def getTimestamp() = System.currentTimeMillis
-
   private def getNonce() = scala.util.Random.alphanumeric.take(16).mkString
-
   private def hmacSha256(secret: String, data: String) = 
     val algo = "HMacSHA256"
     val mac:Mac = Mac.getInstance(algo)
@@ -37,6 +41,8 @@ object BFUtils {
 
   def subscribeText(publicChannel: Channel): WebSocketFrame.Text = WebSocketFrame.text(BitFlyerReq(
     method="subscribe",
-    params=publicChannel.asJson,
+    params=SubscribeParams(publicChannel).asJson,
     id=2).asJson.toString)
+
+  def parseLocalDatetime(dateStr: String): TimeStamp = Instant.parse(dateStr).atZone(ZoneId.systemDefault()).toLocalDateTime
 }
