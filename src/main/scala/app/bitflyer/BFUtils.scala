@@ -1,19 +1,17 @@
-package app.demo
+package app.bitflyer
 
-import app.demo.BitFlyerRes.ExecutionInfo
-
+import app.bitflyer.BitFlyerRes.ExecutionInfo
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.util._
 
 import io.circe.syntax._
 import sttp.ws.{WebSocket, WebSocketFrame}
+
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import org.apache.commons.codec.binary.Hex
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
-import java.time.ZoneId
-import java.time.Instant
+
+import java.time.{ZoneId, Instant}
 
 object BFUtils {
   case class ConnectionState(passAuth: Boolean, 

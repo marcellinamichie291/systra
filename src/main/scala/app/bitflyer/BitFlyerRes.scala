@@ -1,4 +1,4 @@
-package app.demo
+package app.bitflyer
 
 import cats.implicits._
 

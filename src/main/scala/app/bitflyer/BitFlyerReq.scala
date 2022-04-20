@@ -1,4 +1,4 @@
-package app.demo
+package app.bitflyer
 
 import io.circe.Json
 import io.circe.Encoder

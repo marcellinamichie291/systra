@@ -1,7 +1,7 @@
-package com.github.imomushi8.systra.backtest
+package com.github.imomushi8.systra.virtual
 
-import com.github.imomushi8.systra.backtest.BackTestOrder._
-import com.github.imomushi8.systra.backtest.BackTestPosition._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
 
 import com.github.imomushi8.systra.core.util.{isSTOP_LIMIT, isContracted}
 import com.github.imomushi8.systra.core.entity._
@@ -9,7 +9,7 @@ import com.github.imomushi8.systra.core.entity._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 
-object BackTestContract extends LazyLogging:
+object VirtualContract extends LazyLogging:
   /** 約定注文と関連するものを取得する */
   def getRelated(nonContractedOrders: List[Order])(contractedOrder: Order): List[Order] = 
     nonContractedOrders filter { nonContractedOrder =>

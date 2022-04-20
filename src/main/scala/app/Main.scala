@@ -4,11 +4,12 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.data.ChartStream
 import com.github.imomushi8.systra.core.entity.Chart
 import com.github.imomushi8.systra.report._
-import com.github.imomushi8.systra.backtest._
-import com.github.imomushi8.systra.backtest.BTMarket._
+import com.github.imomushi8.systra.virtual._
+import com.github.imomushi8.systra.virtual.VirtualMarket._
 
 import app.Envs._
-import app.demo._
+import app.bitflyer._
+import app.backtest._
 
 import mgo.evolution._
 
@@ -26,7 +27,7 @@ object Main extends IOApp:
     ExitCode.Success
     
     
-  def bfDemo() = BitFlyer[M](
+  def bfDemo() = BitFlyerDemo[M](
     brains, 
     leveragedCapital, 
     BITFLYER_API_KEY, 

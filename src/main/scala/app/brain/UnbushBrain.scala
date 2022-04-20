@@ -1,6 +1,5 @@
 package app.brain
 
-import com.github.imomushi8.systra.backtest._
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.action._
 import com.github.imomushi8.systra.core.market._

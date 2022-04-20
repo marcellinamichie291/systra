@@ -1,7 +1,7 @@
-package com.github.imomushi8.systra.backtest
+package com.github.imomushi8.systra.virtual
 
-import com.github.imomushi8.systra.backtest.BackTestPosition._
-import com.github.imomushi8.systra.backtest.BackTestContract._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
+import com.github.imomushi8.systra.virtual.VirtualContract._
 
 import com.github.imomushi8.systra._
 import com.github.imomushi8.systra.core.util._
@@ -10,7 +10,7 @@ import com.github.imomushi8.systra.core.entity._
 import scala.language.implicitConversions
 import com.typesafe.scalalogging.LazyLogging
 
-object BackTestOrder extends LazyLogging:
+object VirtualOrder extends LazyLogging:
   implicit def toStr(i: Int): String = i.toString
 
   /** settlePositionIdが存在しなかったら例外を投げる */

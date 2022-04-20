@@ -1,7 +1,7 @@
-package com.github.imomushi8.systra.backtest
+package com.github.imomushi8.systra.virtual
 
-import com.github.imomushi8.systra.backtest.BackTestOrder._
-import com.github.imomushi8.systra.backtest.BackTestContract._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualContract._
 
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._
@@ -10,7 +10,7 @@ import com.github.imomushi8.systra.report.Report
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 
-object BackTestPosition extends LazyLogging:
+object VirtualPosition extends LazyLogging:
   /** ポジションを作る */
   def createPosition(chart: Chart)(contractedOrder: Order): Position =
     val validPrice = if contractedOrder.isLIMIT then contractedOrder.price else contractedOrder.triggerPrice

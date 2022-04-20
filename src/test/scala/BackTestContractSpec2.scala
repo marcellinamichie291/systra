@@ -1,7 +1,7 @@
-import com.github.imomushi8.systra.backtest._
-import com.github.imomushi8.systra.backtest.BackTestOrder._
-import com.github.imomushi8.systra.backtest.BackTestPosition._
-import com.github.imomushi8.systra.backtest.BackTestContract._
+import com.github.imomushi8.systra.virtual._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
+import com.github.imomushi8.systra.virtual.VirtualContract._
 
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.action._
