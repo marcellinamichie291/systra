@@ -49,6 +49,7 @@ extension (sub:SummarySubReport)
 /*--------------------------------------------------------------------------------------------*/
 
 object SummarySubReport extends Report {
+  given Initial[SummarySubReport] = new Initial { def empty() = SummarySubReport(0,0,0,0,0) }
 
   /** PositionRecordのListからレポートをまとめる */
   def makeReport(records:List[PositionTransaction]): SummarySubReport = {

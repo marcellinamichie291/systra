@@ -32,6 +32,12 @@ case class SummaryReport(traderName: String,
 
 
 object SummaryReport extends Report:
+  given Initial[SummaryReport] = new Initial {
+    def empty() = 
+      val initSub = Initial[SummarySubReport]()
+      SummaryReport("", 0, 0, 0, OK, initSub, initSub, initSub, 0, 0, 0)
+  }
+
   extension (current: SummaryReport)
     def ++ (traderName: String,
             sampleSize: Long,

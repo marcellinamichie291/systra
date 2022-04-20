@@ -4,6 +4,7 @@ import app.Envs
 import app.bitflyer.BitFlyerRes.ExecutionInfo
 import app.bitflyer.BFUtils.{given_Initial_ConnectionState ,ConnectionState}
 
+import com.github.imomushi8.systra.chart._
 import com.github.imomushi8.systra.core.data._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.util.Initial
@@ -23,9 +24,9 @@ import sttp.ws.{WebSocket, WebSocketFrame}
 
 import com.typesafe.scalalogging.LazyLogging
 
-trait BFStream(apiKey:    String,
-               apiSecret: String,
-               channel:   Channel) extends WebSocketStream, LazyLogging:
+trait BitFlyerWS(apiKey:    String,
+                 apiSecret: String,
+                 channel:   Channel) extends WebSocketStream, LazyLogging:
   def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame]
 
   override val uri: Uri = Envs.BITFLYER_WS_URL

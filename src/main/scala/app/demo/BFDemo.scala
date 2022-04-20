@@ -1,7 +1,8 @@
-package app.bitflyer
+package app.demo
 
-import app.Envs
+import app.bitflyer._
 
+import com.github.imomushi8.systra.chart._
 import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.demo.Demo
 import com.github.imomushi8.systra.virtual.VirtualMarket
@@ -23,17 +24,19 @@ import sttp.client3._
 import sttp.client3.asynchttpclient.fs2.AsyncHttpClientFs2Backend
 import sttp.capabilities.fs2.Fs2Streams
 import sttp.ws.{WebSocket, WebSocketFrame}
+import com.github.imomushi8.systra.core.util.Initial
 
-class BitFlyerDemo[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])],
-                                    firstCapital: Price,
-                                    apiKey:       String,
-                                    apiSecret:    String,
-                                    channel:      Channel) extends BFStream(apiKey, apiSecret, channel), Demo:
-  override def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame] = chartStream
-    .head
-    .flatMap { head => chartStream
-      //.broadcastThrough(summerize(brains, firstCapital, head)*)
-      //.map(_.toString)
-      .printlns
-      .drain
-    }
+object BFDemo:
+  def apply[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])],
+                             firstCapital: Price,
+                             apiKey:       String,
+                             apiSecret:    String,
+                             channel:      Channel) = new BitFlyerWS(apiKey, apiSecret, channel):
+    override def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame] = chartStream
+      .head
+      .flatMap { head => chartStream
+        .broadcastThrough(Demo.summerize(brains, firstCapital, head)*)
+        .map(_.toString)
+        .printlns
+        .drain
+      }

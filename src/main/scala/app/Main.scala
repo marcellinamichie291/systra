@@ -1,7 +1,6 @@
 package com.github.imomushi8.systra
 
 import com.github.imomushi8.systra.core.util._
-import com.github.imomushi8.systra.core.data.ChartStream
 import com.github.imomushi8.systra.core.entity.Chart
 import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.virtual._
@@ -16,6 +15,7 @@ import mgo.evolution._
 import cats.implicits._
 import cats.effect._
 import fs2._
+import java.time.format.DateTimeFormatter
 
 
 object Main extends IOApp:
@@ -41,6 +41,8 @@ object Main extends IOApp:
     import com.github.gekomad.ittocsv.core.ToCsv._
     import com.github.gekomad.ittocsv.parser.IttoCSVFormat
     import java.time.LocalDateTime
+    
+    val csvDatetimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 
     given IttoCSVFormat = IttoCSVFormat.default
     given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
