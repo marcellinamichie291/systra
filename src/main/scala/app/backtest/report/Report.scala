@@ -1,4 +1,4 @@
-package com.github.imomushi8.systra.report
+package app.backtest.report
 
 trait Report {
   def toList:List[String]

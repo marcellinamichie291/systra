@@ -7,39 +7,60 @@ import com.github.imomushi8.systra.virtual._
 import com.github.imomushi8.systra.virtual.VirtualMarket._
 
 import app.Envs._
+import app.demo._
 import app.bitflyer._
 import app.backtest._
 
-import mgo.evolution._
-
 import cats.implicits._
 import cats.effect._
-import fs2._
-import java.time.format.DateTimeFormatter
-
 
 object Main extends IOApp:
   override def run(args: List[String]): IO[ExitCode] = for
     ?   <- IO.println("start")
-    res <- bfDemo()
+    res <- bfDemo().handleError { t => println("error occured") }
     ?   <- IO.println("end")
   yield
     ExitCode.Success
-    
-    
-  def bfDemo() = BitFlyerDemo[M](
-    brains, 
-    leveragedCapital, 
-    BITFLYER_API_KEY, 
-    BITFLYER_API_SECRET, 
-    BITFLYER_PUBLIC_CHANNELS.head)
-    .begin()
-    .end()
 
+  def test() = IO.println {
+    import io.circe.Decoder
+    import io.circe.generic.semiauto._
+    import io.circe.parser._
+    decode[JsonRpcRes[BFRes.Execution]](
+    """{
+    | "jsonrpc":"2.0",
+    | "method":"test",
+    | "params":{
+    |   "channel":"TEST",
+    |   "message":[{
+    |       "id":414, 
+    |       "side:"BUY",
+    |       "price:114514.9,
+    |       "size:431.2,
+    |       "exec_date:"exec String",
+    |       "buy_child_order_acceptance_id:"buy String"
+    |       "sell_child_order_acceptance_id:"sell String"
+    |   }]
+    | }
+    |}""").stripMargin
+  }
+  
+  def bfDemo() = for
+    apiKey    <- BITFLYER_API_KEY.load[IO]
+    apiSecret <- BITFLYER_API_SECRET.load[IO]
+    channel   <- BITFLYER_PUBLIC_CHANNEL.load[IO]
+    ?   <- IO.println(BFUtils.authText(apiKey.value, apiSecret.value))
+    ?   <- test()
+    ws        <- IO{ DemoBitFlyerWS(brains, leveragedCapital, apiKey.value, apiSecret.value, channel) }
+    ?         <- Demo.begin(ws).end()
+  yield ()
+
+/*
   def backtest() = 
     import com.github.gekomad.ittocsv.core.Types.implicits._
     import com.github.gekomad.ittocsv.core.ToCsv._
     import com.github.gekomad.ittocsv.parser.IttoCSVFormat
+    import java.time.format.DateTimeFormatter
     import java.time.LocalDateTime
     
     val csvDatetimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
@@ -56,3 +77,4 @@ object Main extends IOApp:
       .end(writeCsvPath)
       .handleError { t => t.printStackTrace }
       .as(ExitCode.Success)
+  */

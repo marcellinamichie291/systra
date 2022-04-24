@@ -4,14 +4,14 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.virtual._
 import app.brain._
 
+import cats.effect.IO
+import ciris._
 import sttp.client3._
 
 object Envs:
-  val BITFLYER_WS_URL = uri"wss://ws.lightstream.bitflyer.com/json-rpc"
-  val BITFLYER_API_KEY = "MxwMqUeSC1Nz9xByQ8Ujk3"
-  val BITFLYER_API_SECRET = "F8rQyKwkzP4ZAO1Eu3+1SKOTgy73/kCHO5SB0JHaWHU="
-  val BITFLYER_PUBLIC_CHANNELS = List("lightning_executions_BTC_JPY")
-
+  val BITFLYER_API_KEY = env("BITFLYER_API_KEY").secret
+  val BITFLYER_API_SECRET = env("BITFLYER_API_SECRET").secret
+  val BITFLYER_PUBLIC_CHANNEL = default("lightning_executions_BTC_JPY")
 
   type M = ControlChartBrain.Memory
 

@@ -1,6 +1,6 @@
 package app.bitflyer
 
-import app.bitflyer.BitFlyerRes.ExecutionInfo
+import app.bitflyer.BFReq._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.util._
 
@@ -15,8 +15,8 @@ import java.time.{ZoneId, Instant}
 
 object BFUtils {
   case class ConnectionState(passAuth: Boolean, 
-                           isSubscribed: Boolean,
-                           tickers: Seq[ExecutionInfo])
+                             isSubscribed: Boolean,
+                             tickers: Seq[ExecutionInfo])
 
   given Initial[ConnectionState] = new Initial { def empty() = ConnectionState(false,false,Nil) }
 
@@ -32,15 +32,15 @@ object BFUtils {
   def authText(apiKey: String, apiSecret: String): WebSocketFrame.Text =
     val timestamp = getTimestamp()
     val nonce     = getNonce()
-    WebSocketFrame.text(BitFlyerReq(
+    WebSocketFrame.text(JsonRpcReq[Auth](
       method="auth",
-      params=AuthParams(apiKey, timestamp, nonce, hmacSha256(apiSecret, s"${timestamp}${nonce}")).asJson,
-      id=1).asJson.toString)
+      params=Auth(apiKey, timestamp, nonce, hmacSha256(apiSecret, s"${timestamp}${nonce}")),
+      id=Some(1)).asJson.toString)
 
-  def subscribeText(publicChannel: Channel): WebSocketFrame.Text = WebSocketFrame.text(BitFlyerReq(
+  def subscribeText(publicChannel: Channel): WebSocketFrame.Text = WebSocketFrame.text(JsonRpcReq[Subscribe](
     method="subscribe",
-    params=SubscribeParams(publicChannel).asJson,
-    id=2).asJson.toString)
+    params=Subscribe(publicChannel),
+    id=Some(2)).asJson.toString)
 
   def parseLocalDatetime(dateStr: String): TimeStamp = Instant.parse(dateStr).atZone(ZoneId.systemDefault()).toLocalDateTime
 }

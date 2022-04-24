@@ -1,10 +1,9 @@
 package app.demo
 
+import app.demo.Demo
 import app.bitflyer._
 
 import com.github.imomushi8.systra.chart._
-import com.github.imomushi8.systra.report._
-import com.github.imomushi8.systra.demo.Demo
 import com.github.imomushi8.systra.virtual.VirtualMarket
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.data._
@@ -26,7 +25,7 @@ import sttp.capabilities.fs2.Fs2Streams
 import sttp.ws.{WebSocket, WebSocketFrame}
 import com.github.imomushi8.systra.core.util.Initial
 
-object BFDemo:
+object DemoBitFlyerWS:
   def apply[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])],
                              firstCapital: Price,
                              apiKey:       String,
@@ -36,7 +35,6 @@ object BFDemo:
       .head
       .flatMap { head => chartStream
         .broadcastThrough(Demo.summerize(brains, firstCapital, head)*)
-        .map(_.toString)
-        .printlns
+        //.map(_.toString)
         .drain
       }

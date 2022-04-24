@@ -1,6 +1,6 @@
 package app.backtest
 
-import com.github.imomushi8.systra.report._
+import app.backtest.report._
 import com.github.imomushi8.systra.virtual._
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._

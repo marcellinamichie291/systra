@@ -20,7 +20,9 @@ object Dependencies {
 
         "io.circe" %% "circe-core" % "0.14.1",
         "io.circe" %% "circe-generic" % "0.14.1",
-        "io.circe" %% "circe-parser" % "0.14.1", 
+        "io.circe" %% "circe-parser" % "0.14.1",
+
+        "is.cir" %% "ciris" % "2.3.2",
         
         "com.github.gekomad"          %% "itto-csv"         % "2.0.0",
         "ch.qos.logback"              %  "logback-classic"  % "1.2.6",

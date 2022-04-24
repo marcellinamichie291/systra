@@ -1,4 +1,4 @@
-package com.github.imomushi8.systra.report
+package app.backtest.report
 
 /*--------------------------------------------------------------------------------------------*/
 import com.github.imomushi8.systra.core.util._

@@ -5,7 +5,6 @@ import com.github.imomushi8.systra.virtual.VirtualContract._
 
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._
-import com.github.imomushi8.systra.report.Report
 
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging

@@ -1,7 +1,5 @@
 package com.github.imomushi8.systra.virtual
 
-
-import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.market.{MarketBehavior, MarketContext}

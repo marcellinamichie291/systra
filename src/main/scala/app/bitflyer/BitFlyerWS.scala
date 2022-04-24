@@ -1,13 +1,14 @@
 package app.bitflyer
 
-import app.Envs
-import app.bitflyer.BitFlyerRes.ExecutionInfo
+import app.WebSocketUrl
+import app.bitflyer.BFReq._
+import app.bitflyer.BFRes._
 import app.bitflyer.BFUtils.{given_Initial_ConnectionState ,ConnectionState}
 
 import com.github.imomushi8.systra.chart._
 import com.github.imomushi8.systra.core.data._
 import com.github.imomushi8.systra.core.entity._
-import com.github.imomushi8.systra.core.util.Initial
+import com.github.imomushi8.systra.core.util._
 
 import cats.implicits._
 import cats.effect._
@@ -18,6 +19,8 @@ import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.parser._
 
+import ciris._
+
 import sttp.client3._
 import sttp.model.Uri
 import sttp.ws.{WebSocket, WebSocketFrame}
@@ -27,53 +30,56 @@ import com.typesafe.scalalogging.LazyLogging
 trait BitFlyerWS(apiKey:    String,
                  apiSecret: String,
                  channel:   Channel) extends WebSocketStream, LazyLogging:
+  /** トレードの実行 ここでレポート出力等も行うので、デモ取引の場合、実取引の場合で実装を変える必要あり */
   def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame]
+  
+  override val configUri: ConfigValue[Effect, Uri] = WebSocketUrl.BITFLYER_WS_URL
 
-  override val uri: Uri = Envs.BITFLYER_WS_URL
-
-  override def callback(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, WebSocketFrame] = Stream
-    .emit(BFUtils.authText(apiKey, apiSecret))
-    .append(websocket
+  override def callback(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, WebSocketFrame] = 
+    val stream = websocket
       .through(dataToResponse) // circeによるJSONのparse
       .through(responseToState) // parseしたものをさらに整形
       .broadcastThrough(executionPipe, replyPipe) // websocketに返信するPipeとトレード実行するPipeにデータを渡す
-    )
+      .handleErrorWith { throwable => 
+        logger.error(s"Exception occured. ${throwable.getMessage}")
+        Stream.emit(WebSocketFrame.close)
+      }
+
+    Stream.emit(BFUtils.authText(apiKey, apiSecret)).append(stream)
     
-  private val dataToResponse: Pipe[IO, WebSocketFrame.Data[?], Either[io.circe.Error, BitFlyerRes]] = _
+  private val dataToResponse: Pipe[IO, WebSocketFrame.Data[?], Either[io.circe.Error, JsonRpc]] = _
     .map {
       case WebSocketFrame.Text(payload, _, _) =>
         logger.debug(s"GET for Websocket: $payload")
         parse(payload).flatMap { json => json
-          .as[BitFlyerRes.Result]
-          .leftFlatMap{_=>json.as[BitFlyerRes.Error]}
-          .leftFlatMap{_=>json.as[BitFlyerRes.Executions]}
+          .as[JsonRpcRes[Boolean]]
+          .leftFlatMap{ _=>json.as[JsonRpcReq[BitFlyerRes.Execution]] }
         } 
-      case frame => throw new Exception(s"WebSocketFrame is invalid. frame: $frame")
+      case frame => throw new RuntimeException(s"WebSocketFrame is invalid. frame: $frame")
     }
 
-  private val responseToState: Pipe[IO, Either[io.circe.Error, BitFlyerRes], ConnectionState] = _
+  private val responseToState: Pipe[IO, Either[io.circe.Error, JsonRpc], ConnectionState] = _
     .scan(Initial[ConnectionState]()) { case (state, eitherRes) => eitherRes match
       /* 認証結果の場合 */
-      case Right(BitFlyerRes.Result(_, 1, true)) =>
+      case Right(JsonRpcRes(_, 1, Some(true), None)) =>
         logger.info("Auth is Succeeded")
         state.copy(passAuth=true)
 
       /* チャンネル購読結果の場合 */
-      case Right(BitFlyerRes.Result(_, 2, true)) =>
+      case Right(JsonRpcRes(_, 2, Some(true), None)) =>
         logger.info("Channel subscribe is Succeeded")
         state.copy(isSubscribed=true)
 
       /* チャンネル購読後のデータ */
-      case Right(BitFlyerRes.Executions(_, _, params)) => state.copy(tickers=params.message)
+      case Right(JsonRpcReq(_, _, Execution(_, message), _)) => state.copy(tickers=message)
 
       /* RequestError */
-      case Right(BitFlyerRes.Error(_, id, error)) => throw Exception(s"Request Error: ${error.asJson.noSpaces}")
+      case Right(JsonRpcRes(_, _, None, Some(error))) => throw new RuntimeException(s"Request Error: ${error.asJson.noSpaces}")
       /* どれにも当てはまらない場合 */
-      case Right(res) => throw Exception(s"Pattern match Exception: response: $res")
+      case Right(res) => throw new RuntimeException(s"Pattern match Exception: response: $res")
       /* ParseError */
-      case Left(failure) => throw Exception(s"Parse Error: ${failure.getMessage}")
-     }
-
+      case Left(failure) => throw new RuntimeException(s"Parse Error: ${failure.getMessage}")
+    }
 
   /** websocketから受け取るデータをコールバック関数のように回していくPipe */
   private val replyPipe: Pipe[IO, ConnectionState, WebSocketFrame] = _
@@ -82,16 +88,11 @@ trait BitFlyerWS(apiKey:    String,
       case ConnectionState( true,  true, _) => Stream.empty
       case ConnectionState(false,     _, _) => Stream.empty
     }
-    .handleErrorWith { throwable => 
-      logger.error(s"Exception occured. ${throwable.getMessage}")
-      Stream.emit(WebSocketFrame.close) 
-    }
 
   /** アルゴリズム取引を執行するPipe */
   private val executionPipe: Pipe[IO, ConnectionState, WebSocketFrame] = stream => 
     val executionStream = stream
       .map { case ConnectionState(_, _, tickers) => tickers.sortBy(_.exec_date) }
-      .handleError { _ => Nil }
       .flatMap(Stream.emits)
 
     executionStream
