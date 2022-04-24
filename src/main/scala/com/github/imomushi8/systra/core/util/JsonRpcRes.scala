@@ -20,9 +20,9 @@ object JsonRpcRes:
     val pairList: Seq[(String, Json)] = List(
       "jsonrpc" -> fromString(res.jsonrpc),
       "id"  -> fromInt(res.id)
-    )
-    ++ res.result.map { "result"  -> _.asJson }.toSeq
-    ++ res.error.map { "error"  -> _.asJson }.toSeq
+    ) ++ res.result.map { "result"  -> _.asJson }.toList
+      ++ res.error.map { "error"  -> _.asJson }.toList
+      
     obj(pairList*)
 
   implicit def decoder[R: Decoder]: Decoder[JsonRpcRes[R]] = (c: HCursor) =>

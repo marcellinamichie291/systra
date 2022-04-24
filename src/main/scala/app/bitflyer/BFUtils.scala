@@ -16,7 +16,7 @@ import java.time.{ZoneId, Instant}
 object BFUtils {
   case class ConnectionState(passAuth: Boolean, 
                              isSubscribed: Boolean,
-                             tickers: Seq[ExecutionInfo])
+                             tickers: Seq[BFRes.ExecutionInfo])
 
   given Initial[ConnectionState] = new Initial { def empty() = ConnectionState(false,false,Nil) }
 

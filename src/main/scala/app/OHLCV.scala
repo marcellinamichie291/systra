@@ -1,4 +1,4 @@
-package com.github.imomushi8.systra
+package app
 
 import com.github.imomushi8.systra.core.entity._
 

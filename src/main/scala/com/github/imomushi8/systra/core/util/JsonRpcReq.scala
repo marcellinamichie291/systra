@@ -13,22 +13,19 @@ case class JsonRpcReq[Params](jsonrpc: String="2.0",
                               id:      Option[Int]=None) extends JsonRpc
 
 object JsonRpcReq:
-  implicit def encoder[Params: Encoder]: Encoder[JsonRpcReq[Params]] = req => req.id
-    .map { i => obj(
+  implicit def encoder[Params: Encoder]: Encoder[JsonRpcReq[Params]] = req =>
+    val pairList = List(
       "jsonrpc" -> fromString(req.jsonrpc),
       "method"  -> fromString(req.method),
       "params"  -> req.params.asJson,
-      "id"      -> fromInt(i)
-    )}
-    .getOrElse { obj(
-      "jsonrpc" -> fromString(req.jsonrpc),
-      "method"  -> fromString(req.method),
-      "params"  -> req.params.asJson,
-    )}
+    ) ++ req.id.map { "id" -> fromInt(_) }.toList
 
-  implicit def decoder[Params: Decoder]: Decoder[JsonRpcReq[Params]] = (c: HCursor) =>for
+    obj(pairList*)
+    
+
+  implicit def decoder[Params: Decoder]: Decoder[JsonRpcReq[Params]] = (c: HCursor) => for
     jsonrpc <- c.get[String]("jsonrpc")
     method  <- c.get[String]("method")
     params  <- c.get[Params]("params")
-    id      <- c.get[Int]("id")
-  yield JsonRpcReq(jsonrpc, method, params, Some(id))
+    id      <- c.getOrElse[Option[Int]]("id")(None)
+  yield JsonRpcReq(jsonrpc, method, params, id)

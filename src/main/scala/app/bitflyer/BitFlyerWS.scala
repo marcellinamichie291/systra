@@ -6,7 +6,6 @@ import app.bitflyer.BFRes._
 import app.bitflyer.BFUtils.{given_Initial_ConnectionState ,ConnectionState}
 
 import com.github.imomushi8.systra.chart._
-import com.github.imomushi8.systra.core.data._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.util._
 
@@ -26,10 +25,12 @@ import sttp.model.Uri
 import sttp.ws.{WebSocket, WebSocketFrame}
 
 import com.typesafe.scalalogging.LazyLogging
+import java.time.temporal.TemporalAmount
 
 trait BitFlyerWS(apiKey:    String,
                  apiSecret: String,
-                 channel:   Channel) extends WebSocketStream, LazyLogging:
+                 channel:   Channel,
+                 period:    TemporalAmount) extends WebSocketStream, LazyLogging:
   /** トレードの実行 ここでレポート出力等も行うので、デモ取引の場合、実取引の場合で実装を変える必要あり */
   def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame]
   
@@ -53,7 +54,7 @@ trait BitFlyerWS(apiKey:    String,
         logger.debug(s"GET for Websocket: $payload")
         parse(payload).flatMap { json => json
           .as[JsonRpcRes[Boolean]]
-          .leftFlatMap{ _=>json.as[JsonRpcReq[BitFlyerRes.Execution]] }
+          .leftFlatMap{ _=>json.as[JsonRpcReq[BFRes.Execution]] }
         } 
       case frame => throw new RuntimeException(s"WebSocketFrame is invalid. frame: $frame")
     }
@@ -85,8 +86,7 @@ trait BitFlyerWS(apiKey:    String,
   private val replyPipe: Pipe[IO, ConnectionState, WebSocketFrame] = _
     .flatMap {
       case ConnectionState( true, false, _) => Stream.emit(BFUtils.subscribeText(channel))
-      case ConnectionState( true,  true, _) => Stream.empty
-      case ConnectionState(false,     _, _) => Stream.empty
+      case _                                => Stream.empty
     }
 
   /** アルゴリズム取引を執行するPipe */
@@ -110,7 +110,7 @@ trait BitFlyerWS(apiKey:    String,
       either match
       // Leftであれば更新していく
         case Left(Chart(open, high, low, close, volume, datetime)) =>
-          if (execDate compareTo datetime.plusMinutes(1)) < 0 then // 規定時間内の場合
+          if (execDate compareTo datetime.plus(period)) < 0 then // 規定時間内の場合
             Chart(open, high max ticker.price, low min ticker.price, ticker.price, volume + ticker.size, datetime).asLeft[(Chart, ExecutionInfo)]
           else
             (Chart(open, high, low, close, volume, datetime), ticker).asRight[Chart] 

@@ -1,13 +1,14 @@
 package app.backtest
 
 import app.backtest.report._
+
+import com.github.imomushi8.systra.chart._
 import com.github.imomushi8.systra.virtual._
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.action.Brain
-import com.github.imomushi8.systra.core.data._
-import com.github.imomushi8.systra.chart._
 import com.github.imomushi8.systra.core.market.{Tradable, OK, TradeState}
+
 
 import cats.implicits._
 import cats.effect._

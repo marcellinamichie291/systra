@@ -1,6 +1,5 @@
 package com.github.imomushi8.systra.chart
 
-import com.github.imomushi8.systra.report._
 import com.github.imomushi8.systra.core.entity.Chart
 
 import cats.implicits._

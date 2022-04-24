@@ -9,15 +9,17 @@ import com.github.imomushi8.systra.core.util.Initial
 
 import cats.effect.IO
 import fs2._
+import fs2.concurrent.SignallingRef
 
 object Demo extends Tradable[VirtualMarket]:
-  def summerize[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])],
-                                 firstCapital: Price,
-                                 firstChart:   Chart): Pipe[IO, Chart, Unit] = _.println
+
+  def apply[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])],
+                             firstCapital: Price,
+                             firstChart:   Chart): Pipe[IO, Chart, Unit] = _.printlns
 
   /** 開始メソッド */
-  def begin(ws: WebSocketStream): Ops = new Ops(ws)
+  def begin(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, Boolean]): Ops = new Ops(ws, haltOnSignal)
  
-  class Ops(ws: WebSocketStream):
-    /** Demoの終了メソッド */
-    def end() = ws() >> { IO.println("Done DemoTrade") }
+  class Ops(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, Boolean]):
+    /** 終了メソッド */
+    def end() = ws(haltOnSignal) >> { IO.println("Done DemoTrade") }
