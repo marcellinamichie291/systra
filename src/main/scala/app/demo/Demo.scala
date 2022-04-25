@@ -13,6 +13,10 @@ import fs2.concurrent.SignallingRef
 
 object Demo extends Tradable[VirtualMarket]:
 
+  /*
+   * TODO: 実装
+   *       ここでtrade実行を行い、受け取ったPositionTransactionを処理する（DBに入れる or htmlに書き下す）(後者を想定中)
+   */
   def apply[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])],
                              firstCapital: Price,
                              firstChart:   Chart): Pipe[IO, Chart, Unit] = _.printlns

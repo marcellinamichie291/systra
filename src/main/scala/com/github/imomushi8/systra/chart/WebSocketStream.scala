@@ -17,8 +17,9 @@ import sttp.client3.asynchttpclient.fs2.AsyncHttpClientFs2Backend
 import sttp.capabilities.fs2.Fs2Streams
 import sttp.ws.{WebSocket, WebSocketFrame}
 import fs2.concurrent.SignallingRef
+import com.typesafe.scalalogging.LazyLogging
 
-trait WebSocketStream:
+trait WebSocketStream extends LazyLogging:
   /** WebSocketの接続URIをciris.ConfigValueで渡す */
   val configUri: ConfigValue[Effect, Uri]
   
@@ -36,10 +37,10 @@ trait WebSocketStream:
     .use { backend => basicRequest
       .response(asWebSocketStreamAlways(Fs2Streams[IO]) { _
         .through(callback)
-        .interruptWhen(haltOnSignal)
+        .interruptWhen(haltOnSignal) // haltOnSignalの中身がtrueになったら中断する仕組み
         .onComplete { 
-          println("ws is onComplete")
-          Stream.emit(WebSocketFrame.close) 
+          logger.info("WebSocket into onComplete phase. So WebSocket is close.")
+          Stream.emit(WebSocketFrame.close)
         }
       })
       .get(uri)

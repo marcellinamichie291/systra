@@ -44,6 +44,9 @@ trait BitFlyerWS(apiKey:    String,
       .handleErrorWith { throwable => 
         logger.error(s"Exception occured. ${throwable.getMessage}")
         Stream.emit(WebSocketFrame.close)
+        /* TODO: handleErrorWithの中身にIORefを更新する仕組みを作って（もしくはscanを使って状態更新して）、
+         *       IORefの中身が規定回数以上になったらWebSocketFrame.closeを出力、それ以外は再接続（←これむずそう）
+         */
       }
 
     Stream.emit(BFUtils.authText(apiKey, apiSecret)).append(stream)
@@ -63,12 +66,12 @@ trait BitFlyerWS(apiKey:    String,
     .scan(Initial[ConnectionState]()) { case (state, eitherRes) => eitherRes match
       /* 認証結果の場合 */
       case Right(JsonRpcRes(_, 1, Some(true), None)) =>
-        logger.info("Auth is Succeeded")
+        logger.info("BitFlyer Auth is Succeeded")
         state.copy(passAuth=true)
 
       /* チャンネル購読結果の場合 */
       case Right(JsonRpcRes(_, 2, Some(true), None)) =>
-        logger.info("Channel subscribe is Succeeded")
+        logger.info(s"Channel '$channel' subscribe is Succeeded")
         state.copy(isSubscribed=true)
 
       /* チャンネル購読後のデータ */
@@ -79,7 +82,7 @@ trait BitFlyerWS(apiKey:    String,
       /* どれにも当てはまらない場合 */
       case Right(res) => throw new RuntimeException(s"Pattern match Exception: response: $res")
       /* ParseError */
-      case Left(failure) => throw new RuntimeException(s"Parse Error: ${failure.getMessage}")
+      case Left(failure) => throw failure
     }
 
   /** websocketから受け取るデータをコールバック関数のように回していくPipe */

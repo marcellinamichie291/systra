@@ -29,10 +29,11 @@ object DemoBitFlyerWS:
                              apiKey:       String,
                              apiSecret:    String,
                              channel:      Channel,
-                             period:       TemporalAmount) = new BitFlyerWS(apiKey, apiSecret, channel, period):
+                             period:       TemporalAmount) = new BitFlyerWS(apiKey, apiSecret, channel, period) {
     override def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame] = chartStream
       .head
       .flatMap { head => chartStream
         .through(Demo(brains, firstCapital, head))
         .drain
       }
+  }

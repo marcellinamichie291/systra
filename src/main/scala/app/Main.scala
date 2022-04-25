@@ -24,7 +24,14 @@ import fs2.concurrent.SignallingRef
 
 import scala.concurrent.duration.DurationInt
 
+/*
+ * TODO: レポート等の出力形式をまとめたtraitづくり（できれば）
+ * TODO: WebSocket切断時に、再接続ができるようにしたい（最大接続回数をどこかに入力させて（configファイルとかに）、それにしたがって接続させる）
+ */
+
 object Main extends LazyLogging, IOApp:
+  import java.util.concurrent.Executors
+  import scala.concurrent.ExecutionContext
   override def run(args: List[String]): IO[ExitCode] = for
     ?   <- IO.println("start")
     res <- bfDemo(java.time.Duration.ofMinutes(1L))
@@ -37,16 +44,10 @@ object Main extends LazyLogging, IOApp:
     apiSecret <- BITFLYER_API_SECRET.load[IO]
     channel   <- BITFLYER_PUBLIC_CHANNEL.load[IO]
     signal    <- SignallingRef[IO, Boolean](false)
-    ws        <- IO { new BitFlyerWS(apiKey.value, apiSecret.value, channel, period) {
-      override def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame] = chartStream
-        .head
-        .flatMap { head => chartStream
-          .through(Demo(brains, firstCapital, head))
-          .drain
-        } 
-      }
-    }
-    ? <- signal.set(true).timeout(10.seconds)
+    ws        <- IO { DemoBitFlyerWS(brains, leveragedCapital, apiKey.value, apiSecret.value, channel, period) }
+  
+    // 他と別スレッドで実行させる（並列実行させる）
+    ? <- Async[IO].start { IO.sleep(5.minutes) >> signal.set(true) } // ５分後にsignalをtrueにする（trueにするとWebSocketが終了する）
     ? <- Demo.begin(ws, signal).end()
   yield ()
 

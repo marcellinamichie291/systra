@@ -12,7 +12,26 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 
 object Playground extends IOApp:
-  override def run(args: List[String]): IO[ExitCode] = for 
+  override def run(args: List[String]): IO[ExitCode] = 
+    val root = Map[String, String]("user" -> "大")
+    freemarkerProcess("greeting.ftl", root).as(ExitCode.Success)
+    
+  def freemarkerProcess(template: String, data: Map[String, String]) = IO {
+    import java.io.File
+    import java.io.OutputStreamWriter
+    import java.io.Writer
+    import freemarker.template.{Configuration, Template}
+    import collection.JavaConverters._
+
+    val cfg = new Configuration()
+    cfg.setDirectoryForTemplateLoading(new File("""src\main\resources\template"""))
+    val out: Writer = new OutputStreamWriter(System.out)
+    val temp: Template = cfg.getTemplate(template)
+    temp.process(data.asJava, out)
+    out.flush()
+  }
+
+  /*for 
     ?   <- IO.println("start")
     signal <- SignallingRef[IO, Boolean](false)
     ?   <- stream.compile.drain
@@ -25,7 +44,7 @@ object Playground extends IOApp:
     signal  <- Stream.eval(SignallingRef[IO, Boolean](false))
     _       <- service(topic, signal).start(List("A", "B", "C", "D"))
   yield ()
-
+  */
 
   def service(topic: Topic[IO, Event], haltWhenTrue: SignallingRef[IO, Boolean]) = new EventService(topic, haltWhenTrue) {
     override def publisher: Stream[IO, Either[Closed, Unit]] = stdinStream
