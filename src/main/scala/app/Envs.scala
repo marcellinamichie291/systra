@@ -7,11 +7,15 @@ import app.brain._
 import cats.effect.IO
 import ciris._
 import sttp.client3._
+import com.comcast.ip4s._
 
 object Envs:
   val BITFLYER_API_KEY = env("BITFLYER_API_KEY").secret
   val BITFLYER_API_SECRET = env("BITFLYER_API_SECRET").secret
   val BITFLYER_PUBLIC_CHANNEL = default("lightning_executions_BTC_JPY")
+
+  val LOCAL_HOST = default(ipv4"0.0.0.0")
+  val PORT = default(port"33415")
 
   type M = ControlChartBrain.Memory
 

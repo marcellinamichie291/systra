@@ -6,6 +6,9 @@ import com.github.imomushi8.systra.core.entity.Chart
 import com.github.imomushi8.systra.virtual.VirtualMarket._
 
 import app.Envs._
+import app.backend._
+import app.model._
+import app.model.service._
 import app.demo._
 import app.bitflyer._
 import app.backtest._
@@ -15,13 +18,11 @@ import cats.implicits._
 import cats.effect._
 
 import fs2._
-import sttp.ws.WebSocketFrame
-
-import com.typesafe.scalalogging.LazyLogging
-
-import java.time.temporal.TemporalAmount
 import fs2.concurrent.SignallingRef
 
+import sttp.ws.WebSocketFrame
+import com.typesafe.scalalogging.LazyLogging
+import java.time.temporal.TemporalAmount
 import scala.concurrent.duration.DurationInt
 
 /*
@@ -29,54 +30,32 @@ import scala.concurrent.duration.DurationInt
  * TODO: WebSocket切断時に、再接続ができるようにしたい（最大接続回数をどこかに入力させて（configファイルとかに）、それにしたがって接続させる）
  */
 
+/** 
+   * シグナル管理メソッド
+   * ５分後にsignalをtrueにする（trueにするとWebSocketが終了する）
+   *
+    for
+      apiKey    <- BITFLYER_API_KEY.load[IO]
+      apiSecret <- BITFLYER_API_SECRET.load[IO]
+      channel   <- BITFLYER_PUBLIC_CHANNEL.load[IO]
+      signal    <- SignallingRef[IO, Boolean](false)
+      ws        <- IO { DemoBitFlyerWS(brains, leveragedCapital, apiKey.value, apiSecret.value, channel, period) }
+      シグナル管理のIOを別スレッドで実行させる（並列実行させる）
+      ? <- IO.asyncForIO.start(IO.sleep(5.minutes) >> signal.set(true))
+    yield ()
+*/
+
 object Main extends LazyLogging, IOApp:
-  import java.util.concurrent.Executors
-  import scala.concurrent.ExecutionContext
   override def run(args: List[String]): IO[ExitCode] = for
-    ?   <- IO.println("start")
-    res <- bfDemo(java.time.Duration.ofMinutes(1L))
-    ?   <- IO.println("end")
+    ?      <- IO.println("start")
+
+    status <- SignallingRef[IO, AppStatus[Service]](Idle)
+    host   <- LOCAL_HOST.load[IO]
+    port   <- PORT.load[IO]
+    ?      <- IO.asyncForIO.start(HttpBackend.getServer(status, host, port).useForever)
+    //?      <- IO.asyncForIO.foreverM(status.get >>= { s =>  IO.whenA(!s.isIdled) { IO.println(s) >> status.set(Idle)} } )
+    ?      <- IO.asyncForIO.foreverM(TradeApp.start(status) >> status.set(Idle) ) // 実行中は待機していてほしい
+
+    ?      <- IO.println("end")
   yield
     ExitCode.Success
-  
-  def bfDemo(period: TemporalAmount) = for
-    apiKey    <- BITFLYER_API_KEY.load[IO]
-    apiSecret <- BITFLYER_API_SECRET.load[IO]
-    channel   <- BITFLYER_PUBLIC_CHANNEL.load[IO]
-    signal    <- SignallingRef[IO, Boolean](false)
-    ws        <- IO { DemoBitFlyerWS(brains, leveragedCapital, apiKey.value, apiSecret.value, channel, period) }
-  
-    // 他と別スレッドで実行させる（並列実行させる）
-    ? <- Async[IO].start { IO.sleep(5.minutes) >> signal.set(true) } // ５分後にsignalをtrueにする（trueにするとWebSocketが終了する）
-    ? <- Demo.begin(ws, signal).end()
-  yield ()
-
-  def backtest()(using clock: Clock[IO]) = 
-    import app.backtest.report._
-    import com.github.gekomad.ittocsv.core.Types.implicits._
-    import com.github.gekomad.ittocsv.core.ToCsv._
-    import com.github.gekomad.ittocsv.parser.IttoCSVFormat
-    import java.time.format.DateTimeFormatter
-    import java.time.LocalDateTime
-    
-    val csvDatetimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
-
-    given IttoCSVFormat = IttoCSVFormat.default
-    given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
-    
-    val application = BackTest[M](brains, leveragedCapital)
-      .begin[OHLCV](readCsvPath) { csv =>
-        val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
-          Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
-      }
-      .downSampling()
-      .end(writeCsvPath)
-      .handleError { t => t.printStackTrace }
-
-    for
-      start  <- clock.monotonic
-      res    <- application
-      finish <- clock.monotonic
-      msg    <- IO(s"Backtest elapsed time: ${(finish - start).toSeconds} s")
-    yield
-      logger.info(msg)

@@ -1,4 +1,4 @@
-package app
+package app.backtest
 
 import com.github.imomushi8.systra.core.entity._
 
