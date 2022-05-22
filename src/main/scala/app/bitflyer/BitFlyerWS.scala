@@ -27,19 +27,16 @@ import sttp.ws.{WebSocket, WebSocketFrame}
 import com.typesafe.scalalogging.LazyLogging
 import java.time.temporal.TemporalAmount
 
-class BitFlyerWS(executePipe: Chart => Pipe[IO, Chart, Unit],
-                 apiKey:      String,
-                 apiSecret:   String,
-                 channel:     Channel,
-                 period:      TemporalAmount) extends WebSocketStream, LazyLogging:
+class BitFlyerWS(tradePipe: Pipe[IO, Chart, Unit],
+                 apiKey:    String,
+                 apiSecret: String,
+                 channel:   Channel,
+                 period:    TemporalAmount) extends WebSocketStream, LazyLogging:
 
   /** トレードの実行 */
   def executeTrade(chartStream: Stream[IO, Chart]): Stream[IO, WebSocketFrame] = chartStream
-    .head
-    .flatMap { head => chartStream
-      .through(executePipe(head))
-      .drain
-    }
+    .through(tradePipe)
+    .drain
   
   override val configUri: ConfigValue[Effect, Uri] = WebSocketUrl.BITFLYER_WS_URL
 

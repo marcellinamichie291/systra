@@ -10,6 +10,10 @@ import cats.effect._
 import fs2.concurrent.SignallingRef
 
 object TradeApp:
-  def start(status: SignallingRef[IO, AppStatus[Service]]): IO[Unit] = status
+  def start(statusRef: SignallingRef[IO, AppStatus[Service]]): IO[Unit] = statusRef
     .get
-    .flatMap { s => s.map(_.getApp.run(status)).getOrElse(IO.unit) }
+    .flatMap{_
+      .map { service => service.getApp.run(statusRef) }
+      .getOrElse(IO.unit)
+    }
+    .>> { statusRef.set(Idle) }

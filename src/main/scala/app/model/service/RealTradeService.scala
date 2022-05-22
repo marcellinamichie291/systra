@@ -25,4 +25,4 @@ import com.github.imomushi8.systra.chart.WebSocketStream
 import app.model.AppStatus
 
 class RealTradeService(ws: WebSocketStream) extends Service:
-  override def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit] = Kleisli { signal => Demo.begin(ws, signal).end() }
+  override def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit] = Kleisli { signal => ??? }

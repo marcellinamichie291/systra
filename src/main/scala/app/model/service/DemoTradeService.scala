@@ -24,5 +24,15 @@ import java.time.temporal.TemporalAmount
 import com.github.imomushi8.systra.chart.WebSocketStream
 import app.model.AppStatus
 
-class DemoTradeService[Memory: Initial](ws: WebSocketStream) extends Service:
-  override def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit] = Kleisli { status => Demo.begin(ws, status).end() }
+class DemoTradeService(ws: WebSocketStream) extends Service:
+  override def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit] = Kleisli { status => 
+    begin(ws, status)
+      .end() 
+  }
+
+  /** 開始メソッド */
+  def begin(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, AppStatus[Service]]): Ops = new Ops(ws, haltOnSignal)
+ 
+  class Ops(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, AppStatus[Service]]):
+    /** 終了メソッド */
+    def end() = ws(haltOnSignal) >> { IO.println("Done DemoTrade") }
