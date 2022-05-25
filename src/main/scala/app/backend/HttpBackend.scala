@@ -4,7 +4,9 @@ import app.model.AppStatus
 import app.model.service._
 
 import cats.effect._
+
 import fs2.concurrent.SignallingRef
+
 import com.comcast.ip4s._
 import org.http4s.ember.server._
 import org.http4s.implicits._

@@ -13,7 +13,7 @@ object TradeApp:
   def start(statusRef: SignallingRef[IO, AppStatus[Service]]): IO[Unit] = statusRef
     .get
     .flatMap{_
-      .map { service => service.getApp.run(statusRef) }
-      .getOrElse(IO.unit)
+      .map { _.getApp.run(statusRef) } // AppStatusがRunだったら中に入っているServiceを実行
+      .getOrElse(IO.unit)              // それ以外ならなにもしない
     }
-    .>> { statusRef.set(Idle) }
+    .>> { statusRef.set(Idle) } // 終了したらIdle状態にする

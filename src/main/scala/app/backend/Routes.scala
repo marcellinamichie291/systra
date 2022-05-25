@@ -31,29 +31,38 @@ case class Routes(signal: SignallingRef[IO, AppStatus[Service]]):
 
   /* トレード開始 */
   def startService(using clock: Clock[IO]) = HttpRoutes.of[IO] {
-    case GET -> Root / service / "start" :? QueryMarket(market) => service match
-      case "backtest"  => 
-        for
-          _   <- signal.update (AppStatus._run(BackTestService[app.Envs.M](brains, capital, readCsv, writeCsv)))
-          res <- Ok(s"BackTest Start")
-        yield res
+    case GET -> Root / "start" / serviceName => serviceName match
+      case "backtest" =>
 
-      case "demotrade" =>
-        
         // このへんのパラメータもあとで取得する
-        val wsFactory = WebSocketFactory(Demo(brains, capital), java.time.Duration.ofMillis(1L))
+        val service = new BackTestService[app.Envs.M](brains, capital, readCsv, writeCsv)
+        
+        signal.tryUpdate { _.run(service) }
+          .>>= { isOk =>
+           if isOk then Ok("BackTest Start") 
+           else BadRequest("Update cannot")
+          }
+        
+      case "demotrade" =>
+        // このへんのパラメータもあとで取得する
+        val wsFactory = new WebSocketFactory(Demo(brains, capital), java.time.Duration.ofMillis(1L))
+        
+        wsFactory
+          .get("bitflyer_btc")
+          .flatMap { ws => 
+            signal
+              .tryUpdate { _.run(new DemoTradeService(ws)) }
+          }
+          .>>= { isOk =>
+           if isOk then Ok("DemoTrade Start")
+           else BadRequest("Update cannot")
+          }
 
-        for
-          ws  <- wsFactory.get(market)
-          ?   <- signal.update(AppStatus._run(DemoTradeService(ws))) 
-          res <- Ok(s"DemoTrade Start")
-        yield res
-
-      case _           => BadRequest()
+      case other => BadRequest()
   }
 
   val stopService = HttpRoutes.of[IO] { 
-    case GET -> Root / "stop" =>
+    case GET -> Root / "stop"  =>
       /* トレード終了 */
       signal.update { _.idle } >> Ok(s"Stop") 
   }
