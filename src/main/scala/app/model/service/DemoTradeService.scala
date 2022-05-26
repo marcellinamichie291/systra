@@ -23,16 +23,22 @@ import scala.concurrent.duration.DurationInt
 import java.time.temporal.TemporalAmount
 import com.github.imomushi8.systra.chart.WebSocketStream
 import app.model.AppStatus
+import com.typesafe.scalalogging.LazyLogging
 
-class DemoTradeService(ws: WebSocketStream) extends Service:
-  override def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit] = Kleisli { status => 
+class DemoTradeService(ws: WebSocketStream) extends Service with LazyLogging:
+  override def getApp: Kleisli[IO, StatusRef[Service], Unit] = Kleisli { status => 
     begin(ws, status)
       .end() 
   }
 
   /** 開始メソッド */
-  def begin(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, AppStatus[Service]]): Ops = new Ops(ws, haltOnSignal)
+  def begin(ws: WebSocketStream, statusRef: StatusRef[Service]): Ops = new Ops(ws, statusRef)
  
-  class Ops(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, AppStatus[Service]]):
+  class Ops(ws: WebSocketStream, statusRef: StatusRef[Service]):
     /** 終了メソッド */
-    def end() = ws(haltOnSignal.map(_.isIdled)) >> { IO.println("Done DemoTrade") }
+    def end() = ws(statusRef.map(_.isIdled))
+      .handleErrorWith { t =>
+        logger.error("Next error occured", t)
+        statusRef.update(_.reRun)
+      }
+      .>> { IO.println("Done DemoTrade") }

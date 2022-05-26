@@ -45,7 +45,7 @@ class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualM
   given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
   val csvDatetimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")                                 
 
-  override def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit] = Kleisli { status =>
+  override def getApp: Kleisli[IO, StatusRef[Service], Unit] = Kleisli { status =>
     for
       start  <- clock.monotonic
       res    <- application(status)
@@ -54,7 +54,7 @@ class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualM
       logger.info(s"Backtest elapsed time: ${(finish - start).toSeconds} s")
   }
 
-  private def application(status: SignallingRef[IO, AppStatus[Service]]) = 
+  private def application(status: StatusRef[Service]) = 
     begin[app.backtest.OHLCV](readCsvPath) { csv =>
       val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
         Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)

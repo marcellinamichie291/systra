@@ -9,7 +9,6 @@ import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.action.Brain
 import com.github.imomushi8.systra.core.market.{Tradable, OK, TradeState}
 
-
 import cats.implicits._
 import cats.effect._
 import fs2._
