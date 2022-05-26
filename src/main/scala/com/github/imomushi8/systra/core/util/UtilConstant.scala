@@ -2,7 +2,7 @@ package com.github.imomushi8.systra.core.util
 
 import java.time.format.DateTimeFormatter
 
-val datetimeFormatter    = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+val datetimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
 inline val START  = "START  {}"
 inline val END    = "END    {}"

@@ -35,4 +35,4 @@ class DemoTradeService(ws: WebSocketStream) extends Service:
  
   class Ops(ws: WebSocketStream, haltOnSignal: SignallingRef[IO, AppStatus[Service]]):
     /** 終了メソッド */
-    def end() = ws(haltOnSignal) >> { IO.println("Done DemoTrade") }
+    def end() = ws(haltOnSignal.map(_.isIdled)) >> { IO.println("Done DemoTrade") }

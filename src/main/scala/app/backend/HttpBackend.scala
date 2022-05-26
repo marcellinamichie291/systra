@@ -13,10 +13,12 @@ import org.http4s.implicits._
 import org.http4s.server.Router
 
 object HttpBackend:
-  def getServer(status: SignallingRef[IO, AppStatus[Service]], host: Ipv4Address, port: Port) = 
-    val routes = Routes(status)
-    val httpApp = Router("/api" -> routes.services).orNotFound
-    
+  def getServer(host:      Ipv4Address,
+                port:      Port)
+               (statusRef: StatusRef[Service]) =
+    val httpApp = Router("/api" -> Routes(statusRef))
+      .orNotFound
+
     EmberServerBuilder
       .default[IO]
       .withHost(host)

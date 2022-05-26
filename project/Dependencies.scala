@@ -11,7 +11,7 @@ object Dependencies {
   val fs2Version = "3.2.2"
   val circeVersion = "0.14.1"
   val sttpVersion = "3.5.2"
-  val http4sVersion = "0.23.11"
+  val http4sVersion = "1.0.0-M32"
 
   val systraDependencies = Seq(
     "org.typelevel" %% "cats-core"            % catsVersion,
@@ -24,6 +24,8 @@ object Dependencies {
     "org.http4s" %% "http4s-dsl"          % http4sVersion,
     "org.http4s" %% "http4s-ember-server" % http4sVersion,
     "org.http4s" %% "http4s-ember-client" % http4sVersion,
+
+    "org.typelevel" %% "shapeless3-deriving" % "3.0.1",
 
     "io.circe" %% "circe-core"    % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
@@ -49,10 +51,6 @@ object Dependencies {
     //"org.scalanlp" %% "breeze" % "2.0.1-RC2", // これを削除すればbreezeダウンロードが上手くいった
     "org.openmole" %% "mgo" % "3.55",
 
-    //"org.apache.spark" % "spark-core_2.13" % "3.2.0",
-    //"org.apache.spark" % "spark-mllib_2.13" % "3.2.0" % "provided",
-    //"org.apache.spark" % "spark-sql_2.13" % "3.2.0" % "provided",
-
     "org.scalatest"     %% "scalatest"        % "3.2.10"    % Test,
     "org.scalatestplus" %% "scalacheck-1-15"  % "3.2.10.0"  % Test,
     "org.scalacheck"    %% "scalacheck"       % "1.15.4"    % Test,
@@ -69,7 +67,8 @@ object Dependencies {
     "-encoding", "UTF-8",
     "-feature",
     "-language:_",
-    "-Ykind-projector:underscores"
+    "-Ykind-projector:underscores",
+    "-Ywarn-unused-import"
   )
     
   val systraTestKey = Seq(

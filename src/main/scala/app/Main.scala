@@ -35,11 +35,15 @@ object Main extends LazyLogging, IOApp:
     ?      <- IO.println("start")
 
     status <- SignallingRef[IO, AppStatus[Service]](Idle)
-    host   <- LOCAL_HOST.load[IO]
-    port   <- PORT.load[IO]
-    ?      <- IO.asyncForIO.start(HttpBackend.getServer(status, host, port).useForever) // サーバーのほう
+    ?      <- IO.asyncForIO.start(useServer(status))         // サーバーのほう
     ?      <- IO.asyncForIO.foreverM(TradeApp.start(status)) // アプリケーションの方
 
     ?      <- IO.println("end")
   yield
     ExitCode.Success
+
+  def useServer(statusRef: StatusRef[Service]): IO[Unit] = for
+    host   <- LOCAL_HOST.load[IO]
+    port   <- PORT.load[IO]
+    ?      <- HttpBackend.getServer(host, port)(statusRef).useForever
+  yield ()

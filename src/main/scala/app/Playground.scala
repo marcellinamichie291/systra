@@ -26,10 +26,13 @@ import java.io.FileInputStream
 object Playground extends IOApp:
   override def run(args: List[String]): IO[ExitCode] = for
     status <- SignallingRef[IO, AppStatus[Service]](Idle)
-    _ <- HttpBackend.getServer(status, ipv4"0.0.0.0", port"33415").useForever
-    //_      <- IO.asyncForIO.start(HttpBackend.getServer(status, ipv4"0.0.0.0", port"33415").useForever)
-    //_ <- Async[IO].start(IO.sleep(15.second) >> status.update { a => a.run(BackTestService(brains, leveragedCapital, readCsvPath, writeCsvPath)) } )
-    //_      <- IO.asyncForIO.foreverM(status.get >>= { s => IO.whenA(!s.isIdled) { IO.println(s) >> status.set(Idle) } } )
-    //_ <- IO.asyncForIO.foreverM(status.get >>= { s => IO.println(s) } )
-  yield
-    ExitCode.Success
+    _      <- IO.asyncForIO.start(useServer(status))
+  //  _      <- IO.asyncForIO.foreverM(status.get >>= { s => IO.whenA(!s.isIdled) { IO.println(s) >> status.set(Idle) } })
+    _      <- IO.asyncForIO.foreverM(status.get >>= { s => IO.println(s) })
+  yield ExitCode.Success
+
+  def useServer(statusRef: StatusRef[Service]): IO[Unit] = for
+    host   <- LOCAL_HOST.load[IO]
+    port   <- PORT.load[IO]
+    ?      <- HttpBackend.getServer(host, port)(statusRef).useForever
+  yield ()

@@ -17,52 +17,52 @@ import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.dsl.impl.QueryParamDecoderMatcher
 
+/**
+ * ルーティング
+ */
+object Routes:
 
-case class Routes(signal: SignallingRef[IO, AppStatus[Service]]):
+  val brains   = app.Envs.brains
+  val capital  = app.Envs.leveragedCapital
+  val readCsv  = app.Envs.readCsvPath
+  val writeCsv = app.Envs.writeCsvPath
+
   object QueryMarket extends QueryParamDecoderMatcher[String]("market")
   object QueryPeriod extends QueryParamDecoderMatcher[String]("period")
 
-  val services = startService <+> stopService
-  
-  val brains = app.Envs.brains
-  val capital = app.Envs.leveragedCapital
-  val readCsv = app.Envs.readCsvPath
-  val writeCsv = app.Envs.writeCsvPath
+  /**
+   * ルーティング
+   */
+  def apply(signal: SignallingRef[IO, AppStatus[Service]])(
+      using clock: Clock[IO]) = HttpRoutes.of[IO] {
 
-  /* トレード開始 */
-  def startService(using clock: Clock[IO]) = HttpRoutes.of[IO] {
-    case GET -> Root / "start" / serviceName => serviceName match
-      case "backtest" =>
+    /* バックテスト開始 */
+    case GET -> Root / "start" / "backtest" =>
 
-        // このへんのパラメータもあとで取得する
-        val service = new BackTestService[app.Envs.M](brains, capital, readCsv, writeCsv)
-        
-        signal.tryUpdate { _.run(service) }
-          .>>= { isOk =>
-           if isOk then Ok("BackTest Start") 
-           else BadRequest("Update cannot")
-          }
-        
-      case "demotrade" =>
-        // このへんのパラメータもあとで取得する
-        val wsFactory = new WebSocketFactory(Demo(brains, capital), java.time.Duration.ofMillis(1L))
-        
-        wsFactory
-          .get("bitflyer_btc")
-          .flatMap { ws => 
-            signal
-              .tryUpdate { _.run(new DemoTradeService(ws)) }
-          }
-          .>>= { isOk =>
-           if isOk then Ok("DemoTrade Start")
-           else BadRequest("Update cannot")
-          }
+      // このへんのパラメータもあとで取得する
+      val service = new BackTestService[app.Envs.M](brains, capital, readCsv, writeCsv)
+      
+      for
+        isIdled <- signal.get.map(_.isIdled)
+        isOk    <- if isIdled then signal.tryUpdate { _.run(service) } else IO(false)
+        res     <- if isOk then Ok("BackTest Start") else BadRequest("Update cannot")
+      yield res
 
-      case other => BadRequest()
-  }
+    /* デモ取引開始 */
+    case GET -> Root / "start" / "demotrade" =>
+      
+      // このへんのパラメータもあとで取得する
+      val wsFactory = new WebSocketFactory(Demo(brains, capital), java.time.Duration.ofMillis(1L))
+      
+      for
+        ws      <- wsFactory.get("bitflyer_btc")
+        isIdled <- signal.get.map(_.isIdled)
+        isOk    <- if isIdled then signal.tryUpdate { _.run(new DemoTradeService(ws)) } else IO(false)
+        res     <-
+          if isOk then Ok("DemoTrade Start") else BadRequest("Update cannot")
+      yield res
 
-  val stopService = HttpRoutes.of[IO] { 
-    case GET -> Root / "stop"  =>
-      /* トレード終了 */
-      signal.update { _.idle } >> Ok(s"Stop") 
+    /* トレード終了 */
+    case GET -> Root / "stop" =>
+      signal.update { _.idle } >> Ok(s"Stop")
   }

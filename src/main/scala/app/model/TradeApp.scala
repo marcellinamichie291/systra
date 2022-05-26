@@ -10,9 +10,9 @@ import cats.effect._
 import fs2.concurrent.SignallingRef
 
 object TradeApp:
-  def start(statusRef: SignallingRef[IO, AppStatus[Service]]): IO[Unit] = statusRef
+  def start(statusRef: StatusRef[Service]): IO[Unit] = statusRef
     .get
-    .flatMap{_
+    .flatMap {_
       .map { _.getApp.run(statusRef) } // AppStatusがRunだったら中に入っているServiceを実行
       .getOrElse(IO.unit)              // それ以外ならなにもしない
     }

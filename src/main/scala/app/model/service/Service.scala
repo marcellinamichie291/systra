@@ -25,5 +25,7 @@ import scala.concurrent.duration.DurationInt
 
 import app.model.AppStatus
 
+type StatusRef[S] = SignallingRef[IO, AppStatus[S]]
+
 trait Service:
-  def getApp: Kleisli[IO, SignallingRef[IO, AppStatus[Service]], Unit]
+  def getApp: Kleisli[IO, StatusRef[Service], Unit]
