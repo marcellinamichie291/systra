@@ -67,8 +67,7 @@ object Dependencies {
     "-encoding", "UTF-8",
     "-feature",
     "-language:_",
-    "-Ykind-projector:underscores",
-    "-Ywarn-unused-import"
+    "-Ykind-projector:underscores"
   )
     
   val systraTestKey = Seq(

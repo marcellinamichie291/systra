@@ -33,36 +33,39 @@ object Routes:
   /**
    * ルーティング
    */
-  def apply(signal: SignallingRef[IO, AppStatus[Service]])(
-      using clock: Clock[IO]) = HttpRoutes.of[IO] {
+  def apply(signal: SignallingRef[IO, AppStatus[Service]])(using clock: Clock[IO]) = HttpRoutes.of[IO] {
 
     /* バックテスト開始 */
     case GET -> Root / "start" / "backtest" =>
-
       // このへんのパラメータもあとで取得する
       val service = new BackTestService[app.Envs.M](brains, capital, readCsv, writeCsv)
-      
+
       for
-        isIdled <- signal.get.map(_.isIdled)
-        isOk    <- if isIdled then signal.tryUpdate { _.run(service) } else IO(false)
-        res     <- if isOk then Ok("BackTest Start") else BadRequest("Update cannot")
+        isIdled   <- signal.get.map { _.isIdled }
+        isUpdated <- signal.tryUpdate { _.run(service) } // 前のアップデートの後、数十秒ほど経過しないとアップデート不可能
+        res       <- if isIdled && isUpdated then Ok("Start BackTest")
+                     else if !isUpdated then BadRequest("Start BackTest failed")
+                     else BadRequest("It is not Idled")
       yield res
 
     /* デモ取引開始 */
     case GET -> Root / "start" / "demotrade" =>
-      
       // このへんのパラメータもあとで取得する
-      val wsFactory = new WebSocketFactory(Demo(brains, capital), java.time.Duration.ofMillis(1L))
-      
+      val wsFactory = new WebSocketFactory(java.time.Duration.ofMinutes(1L))
+
       for
-        ws      <- wsFactory.get("bitflyer_btc")
-        isIdled <- signal.get.map(_.isIdled)
-        isOk    <- if isIdled then signal.tryUpdate { _.run(new DemoTradeService(ws)) } else IO(false)
-        res     <-
-          if isOk then Ok("DemoTrade Start") else BadRequest("Update cannot")
+        ws        <- wsFactory.get("bitflyer_btc")
+        isIdled   <- signal.get.map { _.isIdled }
+        isUpdated <- signal.tryUpdate { _.run(new DemoTradeService(brains, capital, ws)) }
+        res       <- if isIdled && isUpdated then Ok("Start DemoTrade")
+                     else if !isUpdated then BadRequest("Start DemoTrade failed")
+                     else BadRequest("It is not Idled")
       yield res
 
     /* トレード終了 */
     case GET -> Root / "stop" =>
-      signal.update { _.idle } >> Ok(s"Stop")
+      for
+        ?   <- signal.update { _.idle }
+        res <- Ok(s"Stop")
+      yield res
   }

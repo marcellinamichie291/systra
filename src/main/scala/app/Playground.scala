@@ -24,7 +24,36 @@ import java.io.FileWriter
 import java.io.FileInputStream
 
 object Playground extends IOApp:
-  override def run(args: List[String]): IO[ExitCode] = for
+
+  override def run(args: List[String]): IO[ExitCode] = Stream[IO, Int](1, 2, 3, 4)
+    .append(Stream.raiseError[IO](new RuntimeException("This is error")))
+    .attempts(Stream.constant[IO, FiniteDuration](5.second))
+    .zipWithScan1(0) {
+      case (connectCnt, Left(_))  => connectCnt + 1
+      case (connectCnt, Right(_)) => connectCnt
+    }
+    .takeWhile { case (_, connectCount) => connectCount < 5 }
+    .flatMap {
+      case (Left(t), idx) => 
+        println(s"Exception occured. ${t.getMessage}")
+        println(s"WebSocket reconnect count: $idx/5")
+        Stream.empty
+      case (Right(num), _) => Stream.emit(num)
+    }
+    .scan(0)(_+_)
+    .map { num =>
+      println(s"printed $num")
+      num
+    }
+    .onComplete { 
+      println("Websocket is finished.")
+      Stream.empty
+    }
+    .compile
+    .drain
+    .as(ExitCode.Success)
+    
+  def runStatusTest = for
     status <- SignallingRef[IO, AppStatus[Service]](Idle)
     _      <- IO.asyncForIO.start(useServer(status))
   //  _      <- IO.asyncForIO.foreverM(status.get >>= { s => IO.whenA(!s.isIdled) { IO.println(s) >> status.set(Idle) } })
