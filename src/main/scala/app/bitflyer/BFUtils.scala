@@ -3,6 +3,7 @@ package app.bitflyer
 import app.bitflyer.BFReq._
 import app.bitflyer.BFRes._
 import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.entity.chartMonoid
 import com.github.imomushi8.systra.core.util._
 
 import io.circe.syntax._
@@ -10,7 +11,10 @@ import io.circe.syntax._
 import cats._
 import cats.implicits._
 import cats.effect._
+
 import fs2._
+import fs2.timeseries.{TimeStamped, TimeSeries}
+
 import sttp.ws.{WebSocket, WebSocketFrame}
 
 import javax.crypto.Mac
@@ -19,6 +23,9 @@ import org.apache.commons.codec.binary.Hex
 
 import java.time.{ZoneId, Instant}
 import java.time.temporal.TemporalAmount
+import scala.concurrent.duration._
+import java.time.LocalDateTime
+
 
 object BFUtils:
   case class ConnectionState(passAuth: Boolean, 
@@ -49,9 +56,31 @@ object BFUtils:
     params=Subscribe(publicChannel),
     id=Some(2)).asJson.toString)
 
-  def parseLocalDatetime(dateStr: String): TimeStamp = Instant.parse(dateStr).atZone(ZoneId.systemDefault()).toLocalDateTime
+  def parseTimeStamp(dateStr: String): TimeStamp = UnixTimeStamp.parseSimple(dateStr)
 
+  def convertChart: ExecutionInfo => Chart = { case ExecutionInfo(_,_,price,size,exec_date,_,_) =>
+    Chart(price, price, price, price, size, parseTimeStamp(exec_date))
+  }
+
+  private def calcChart(period: FiniteDuration): Pipe[IO, TimeStamped[Option[ExecutionInfo]], TimeStamped[Seq[Chart]]] = TimeStamped
+    .rate[Option[ExecutionInfo], Seq[Chart]](period) {
+      tickerOp => Vector.from(tickerOp).map(convertChart)
+    }
+    .toPipe[IO]
+
+  def toChart(period: FiniteDuration)(input: Stream[IO, ExecutionInfo]): Stream[IO, Chart] =
+    TimeSeries
+      .timePulled(input, period, period)
+      .through(calcChart(period))
+      .map { case TimeStamped(time, charts) => // time は unix timestampのmsecが返る
+        val realtime = time - period
+        charts.reduceLeft(_|+|_).setTime(realtime.toMillis)
+      }
+
+
+      
   /** TickerからChartに成形する */
+  /*
   def createChart(period: TemporalAmount,
                   head:   Chart): Pipe[IO, ExecutionInfo, Chart] = _
     .scan(head.asLeft[(Chart, ExecutionInfo)]) { (either, ticker) => 
@@ -70,3 +99,4 @@ object BFUtils:
           Chart(prevPrice, ticker.price max prevPrice, ticker.price min prevPrice, ticker.price, ticker.size+prevSize, prevDatetime).asLeft[(Chart, ExecutionInfo)]
     }
     .collect { case Right((chart, _)) => chart }
+  */

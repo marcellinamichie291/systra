@@ -14,6 +14,8 @@ import cats.effect.implicits._
 import cats.effect.unsafe.implicits.global
 import fs2._
 
+import math.Ordering.Implicits.infixOrderingOps
+
 /**
  * 新たな市場を定義した場合に被せることで、トレード可能にするための型クラス
  */

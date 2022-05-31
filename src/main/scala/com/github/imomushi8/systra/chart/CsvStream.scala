@@ -1,9 +1,9 @@
 package com.github.imomushi8.systra.chart
 
-import com.github.imomushi8.systra.core.entity.Chart
+import com.github.imomushi8.systra.core.entity._
 
-import cats.implicits._
 import cats.effect._
+import cats.implicits.catsSyntaxEitherId
 
 import fs2._
 import fs2.io.file.{Files, Path}
@@ -12,8 +12,8 @@ import com.github.gekomad.ittocsv.core.FromCsv.Decoder
 import com.github.gekomad.ittocsv.parser.io.FromFile._
 import com.github.gekomad.ittocsv.parser.IttoCSVFormat
 import deriving.Mirror.ProductOf
-import java.time.LocalDateTime
-import java.time.temporal.TemporalAmount
+import math.Numeric.Implicits.infixNumericOps
+import math.Ordering.Implicits.infixOrderingOps
 
 object CsvStream:
   /**
@@ -38,24 +38,23 @@ object CsvStream:
       }
     }
 
-  def downSampling(period: TemporalAmount)
+  def downSampling(period: TimeStamp)
                   (stream: Stream[IO, Chart]): Stream[IO, Chart] =
     stream.head.flatMap { head =>
       stream
         .scan(head.asLeft[(Chart, Chart)]) {
           // Leftであれば更新していく
-          case (Left(Chart(open, high, low, close, volume, datetime)), chart) =>
-            if (chart.datetime compareTo datetime.plusMinutes(5)) < 0
-            then // 規定時間内の場合
+          case (Left(Chart(open, high, low, close, volume, timestamp)), chart) =>
+            if chart.timestamp < timestamp + period then // 規定時間内の場合
               Chart(
                 open,
                 high max chart.high,
                 low min chart.low,
                 chart.close,
                 volume + chart.volume,
-                datetime).asLeft[(Chart, Chart)]
+                timestamp).asLeft[(Chart, Chart)]
             else
-              (Chart(open, high, low, close, volume, datetime), chart)
+              (Chart(open, high, low, close, volume, timestamp), chart)
                 .asRight[Chart]
 
           // Rightであればリセットする
@@ -66,7 +65,7 @@ object CsvStream:
               low min prev.low,
               close,
               volume + prev.volume,
-              prev.datetime).asLeft[(Chart, Chart)]
+              prev.timestamp).asLeft[(Chart, Chart)]
         }
         .collect { case (Right((chart, _))) => chart }
     }

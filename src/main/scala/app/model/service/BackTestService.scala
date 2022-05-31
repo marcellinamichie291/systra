@@ -35,6 +35,9 @@ import com.github.gekomad.ittocsv.core.FromCsv.Decoder
 import com.github.gekomad.ittocsv.parser.IttoCSVFormat
 import deriving.Mirror.ProductOf
 import java.time.temporal.TemporalAmount
+import java.util.Date
+import java.time.Instant
+import java.time.ZonedDateTime
 
 class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])], 
                                        firstCapital: Price,
@@ -56,10 +59,10 @@ class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualM
 
   private def application(status: StatusRef[Service]) = 
     begin[app.backtest.OHLCV](readCsvPath) { csv =>
-      val datetime = LocalDateTime.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
-        Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, datetime)
+      val timestamp = UnixTimeStamp.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
+        Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, timestamp)
     }
-    .downSampling(null)
+    .downSampling(UnixTimeStamp(0))
     .end(writeCsvPath)
     .handleError { t => t.printStackTrace }
 
@@ -73,7 +76,7 @@ class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualM
 
   class Ops(stream: Stream[IO, Chart]):
     /** ダウンサンプリング */
-    def downSampling(period: TemporalAmount): Ops = new Ops(stream.through(CsvStream.downSampling(period)))
+    def downSampling(period: TimeStamp): Ops = new Ops(stream.through(CsvStream.downSampling(period)))
 
     /** 終了メソッド */
     def end(writeCsvPath: String): IO[Unit] = Stream

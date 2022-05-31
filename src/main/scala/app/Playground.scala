@@ -25,7 +25,49 @@ import java.io.FileInputStream
 
 object Playground extends IOApp:
 
-  override def run(args: List[String]): IO[ExitCode] = Stream[IO, Int](1, 2, 3, 4)
+  override def run(args: List[String]): IO[ExitCode] = test
+    .as(ExitCode.Success)
+  
+  import fs2.{Stream, Chunk, Scan}
+  import fs2.timeseries.{TimeStamped, TimeSeries}
+  import cats.effect.{Ref, Temporal}
+  import scodec.bits.ByteVector
+  import scala.collection.immutable.Queue
+  import scala.concurrent.duration._
+
+  def test = Stream
+    .fixedDelay[IO](300.milli)
+    .zipRight(Stream.range(1, 10).repeat)
+    .through(measureAverageBitrate)
+    //.printlns
+    .compile
+    .drain
+
+  def averageBitrate = TimeStamped
+    .withRate[Option[Int], Seq[Int]](3.second)(_.map{ i=>Seq(i) }.getOrElse(Nil))
+    /*.andThen(Scan.stateful1(Queue.empty[Int]) {
+      case (q, tsv @ TimeStamped(_, Right(_))) => (q, tsv)
+      case (q, TimeStamped(t, Left(seq))) =>
+        println(s"QUEUE: $q")
+        println(s"SEQ: $seq")
+        (q, TimeStamped(t, Left((seq))))// ++ q))))//.take(20))))
+    })*/
+
+  def measureAverageBitrate[F[_]: Temporal](input: Stream[F, Int]): Stream[F, Int] =
+    TimeSeries.timePulled(input, 0.second, 3.second)
+      .through(averageBitrate.toPipe)
+      .flatMap {
+        case TimeStamped(_, Left(bitrate)) => 
+          println(s"LEFT: $bitrate")
+          Stream.empty
+        case TimeStamped(_, Right(Some(bytes))) => 
+          //println(s"RIGHT: $bytes")
+          Stream.empty
+        case TimeStamped(_, Right(None)) => Stream.empty
+      }
+    
+    
+  def retryTest = Stream[IO, Int](1, 2, 3, 4)
     .append(Stream.raiseError[IO](new RuntimeException("This is error")))
     .attempts(Stream.constant[IO, FiniteDuration](5.second))
     .zipWithScan1(0) {

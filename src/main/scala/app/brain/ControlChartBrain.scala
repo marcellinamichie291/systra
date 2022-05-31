@@ -15,8 +15,11 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.action._
 import com.github.imomushi8.systra.core.market._
+import com.github.imomushi8.systra.core.entity.chartMonoid
+import com.github.imomushi8.systra.core.entity.UnixTimeStamp._
 
-import java.time.LocalDateTime
+import math.Numeric.Implicits.infixNumericOps
+import math.Ordering.Implicits.infixOrderingOps
 
 inline val minimumLot = 1000.0
 
@@ -26,7 +29,7 @@ object ControlChartBrain:
   case class Memory(chartList: List[Chart], cc: Option[ControlChart], prevOHLCV: Chart, orderDT: TimeStamp)
 
   given Initial[Memory] with
-    override def empty(): Memory = Memory(Nil, None, Chart(0,0,0,0,0,LocalDateTime.MIN),LocalDateTime.MIN)
+    override def empty(): Memory = Memory(Nil, None, Monoid[Chart].empty, UnixTimeStamp(0L))
 
   def apply[Market](expiredHour: Int=24,
                     maxBias: Int=25,
@@ -37,10 +40,10 @@ object ControlChartBrain:
       val nowChartList =
         if (memory.chartList.size > 59) chart +: memory.chartList.take(59)
         else chart +: memory.chartList
-      val expire = chart.datetime.plusHours(expiredHour) // 期限切れ
+      val expire = chart.timestamp + expiredHour.toLong.toHour // 期限切れ
 
       /* 前回のアクションから60分以内 */
-      if chart.datetime.minusHours(1) isBefore memory.prevOHLCV.datetime then
+      if chart.timestamp - 1L.toHour <= memory.prevOHLCV.timestamp then
 
         // ポジションがなければ何もしない
         if context.positions.isEmpty then
@@ -86,7 +89,7 @@ object ControlChartBrain:
           nowChartList.map(_.low).min,
           nowChartList.head.close,
           nowChartList.map(_.volume).sum,
-          nowChartList.last.datetime)
+          nowChartList.last.timestamp)
 
         // 追跡中の注文が約定して存在している場合は強制的に約定させる
         if context.positions.nonEmpty then
@@ -124,7 +127,7 @@ object ControlChartBrain:
               _ <- refMarket.placeOrder(STOP(side, orderPrice), size, expire)
             yield 
               refMarket).>>= { ref => 
-              Actions.next(Memory(nowChartList, None, nowOHLCV, chart.datetime), context, ref.some)
+              Actions.next(Memory(nowChartList, None, nowOHLCV, chart.timestamp), context, ref.some)
             } handleError { t => 
               Actions.end(t.getMessage)
               //context.getMarket // 元の状態に戻す

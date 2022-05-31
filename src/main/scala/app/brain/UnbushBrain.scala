@@ -4,12 +4,16 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.action._
 import com.github.imomushi8.systra.core.market._
 import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.entity.UnixTimeStamp._
 
 import cats._
 import cats.data.{StateT}
 import cats.implicits.catsSyntaxFlatMapOps
 import cats.effect.IO
 import cats.implicits.catsSyntaxOptionId
+
+import math.Numeric.Implicits.infixNumericOps
+import math.Ordering.Implicits.infixOrderingOps
 
 inline val tradeRisk = 0.02
 inline val maxLoss = -10000.0
@@ -41,7 +45,7 @@ object UnbushBrain:
       val nextChartList =
         if (memory.chartList.size > previousDay) chart +: memory.chartList.take(previousDay)
         else chart +: memory.chartList
-      val expire = chart.datetime.plusMonths(6)
+      val expire = chart.timestamp + 6.toMonth
       
       // 追跡中の注文がない場合
       if context.positions.isEmpty && context.orders.isEmpty then

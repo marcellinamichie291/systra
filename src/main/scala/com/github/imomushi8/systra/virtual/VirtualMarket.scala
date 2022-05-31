@@ -9,7 +9,9 @@ import com.github.imomushi8.systra.virtual.VirtualContract._
 
 import cats.effect.{ExitCode, IO}
 import com.typesafe.scalalogging.LazyLogging
-import java.time.LocalDateTime
+
+import math.Numeric.Implicits.infixNumericOps
+import math.Ordering.Implicits.infixOrderingOps
 
 case class VirtualMarket(capital     :Double,
                          orders      :List[Order],
@@ -110,7 +112,7 @@ object VirtualMarket extends LazyLogging:
         logger.debug(START, "Check Contract")
 
         /* 有効期限切れの注文があった場合は削除する */
-        val expiredOrders = orders filter { order => chart.datetime isAfter order.expire}
+        val expiredOrders = orders filter { order => chart.timestamp >= order.expire}
         val nonExpiredOrders = orders diff expiredOrders
         val cancelPl = expiredOrders.map { order => 
           order.side * (if order.isLIMIT then order.price else order.triggerPrice) * order.size

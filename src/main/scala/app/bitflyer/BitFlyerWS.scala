@@ -26,6 +26,7 @@ import sttp.ws.{WebSocket, WebSocketFrame}
 
 import com.typesafe.scalalogging.LazyLogging
 import java.time.temporal.TemporalAmount
+import scala.concurrent.duration._
 
 class BitFlyerWS(apiKey:    String,
                  apiSecret: String,
@@ -35,53 +36,47 @@ class BitFlyerWS(apiKey:    String,
   override val configUri: ConfigValue[Effect, Uri] = WebSocketUrl.BITFLYER_WS_URL
   override val configMaxConnectCount: ConfigValue[Effect, Int] = default(5) // 変更するならここで変える
 
-  override def toChart(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, (WebSocketFrame, Option[Chart])] = 
+  override def toChart(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, (Option[WebSocketFrame], Option[Chart])] = 
     lazy val stream = websocket
       .through(dataToResponse) // circeによるJSONのparse
       .through(responseToState) // parseしたものをさらに整形
       .flatMap {
-        case ConnectionState(true, false, tickers) => Stream.emit((BFUtils.subscribeText(channel), tickers))
-        case _                                     => Stream.empty
+        case ConnectionState( true, false, tickers) => Stream.emit((Some(BFUtils.subscribeText(channel)), tickers))
+        case ConnectionState( true,  true, tickers) => Stream.emit((        Option.empty[WebSocketFrame], tickers))
+        case ConnectionState(false,     _, tickers) => Stream.empty
       }
-      .flatMap { case (frame, tickers) =>
-        Stream.emits(tickers.sortBy(_.exec_date).map((frame, _)))
+      .flatMap { case (frameOp, tickers) => 
+        Stream.emit((frameOp, Option.empty[ExecutionInfo])) ++ Stream.emits(tickers.sortBy(_.exec_date).map { ticker => (None, Some(ticker)) })
       }
-      .through(tickerToChart)
+      .broadcastThrough(
+        tickerToChart,
+        collectWSFrame
+      )
       
     Stream
-      .emit((BFUtils.authText(apiKey, apiSecret), None))
+      .emit((Some(BFUtils.authText(apiKey, apiSecret)), None))
       .append(stream)
 
   /* tickerをchartに変換する */
-  private def tickerToChart(stream: Stream[IO, (WebSocketFrame, ExecutionInfo)]): Stream[IO, (WebSocketFrame, Option[Chart])] = stream
+  private def tickerToChart(stream: Stream[IO, (Option[WebSocketFrame], Option[ExecutionInfo])]): Stream[IO, (Option[WebSocketFrame], Option[Chart])] = 
+    val tickerStream = stream.collect { case (_, Some(ticker)) => ticker }
+    tickerStream
+      .through(BFUtils.toChart(1.minute))
+      .map { chart => (None, Some(chart)) }
+    /*
     .head
-    .flatMap { case (frame, ExecutionInfo(_,_,price,size,exec_date,_,_)) =>
-      val firstChart = Chart(price, price, price, price, size, BFUtils.parseLocalDatetime(exec_date))
-      stream.through(createChart(period, (frame, firstChart)))
+    .flatMap { 
+      case ExecutionInfo(_,_,price,size,exec_date,_,_) =>
+        val firstChart = Chart(price, price, price, price, size, BFUtils.parseLocalDatetime(exec_date))
+        tickerStream
+          .through(BFUtils.createChart(period, firstChart))
+          .map { chart => (None, Some(chart)) }
     }
-    
-  /** TickerからChartに成形する */
-  private def createChart(period: TemporalAmount,
-                          head:   (WebSocketFrame, Chart)): Pipe[IO, (WebSocketFrame, ExecutionInfo), (WebSocketFrame, Option[Chart])] = _
-    .scan(head.asLeft[(WebSocketFrame, Chart, ExecutionInfo)]) { case (either, (_, ticker)) => 
-      val execDate = BFUtils.parseLocalDatetime(ticker.exec_date)
-      either match
-      // Leftであれば更新していく
-        case Left(frame, Chart(open, high, low, close, volume, datetime)) =>
-          if (execDate compareTo datetime.plus(period)) < 0 then // 規定時間内の場合
-            (frame, Chart(open, high max ticker.price, low min ticker.price, ticker.price, volume + ticker.size, datetime)).asLeft[(WebSocketFrame, Chart, ExecutionInfo)]
-          else
-            (frame, Chart(open, high, low, close, volume, datetime), ticker).asRight[(WebSocketFrame, Chart)] 
+    */
 
-        // Rightであればリセットする
-        case Right(frame, _, ExecutionInfo(_,_,prevPrice,prevSize,prevExecDate,_,_)) =>
-          val prevDatetime = BFUtils.parseLocalDatetime(prevExecDate)
-          (frame, Chart(prevPrice, ticker.price max prevPrice, ticker.price min prevPrice, ticker.price, ticker.size+prevSize, prevDatetime)).asLeft[(WebSocketFrame, Chart, ExecutionInfo)]
-    }
-    .map { 
-      case Left(frame, _) => (frame, None)
-      case Right((frame, chart, _)) => (frame, Some(chart)) }
-
+  /** WebSocketFrameだけ回収する */
+  private def collectWSFrame(stream: Stream[IO, (Option[WebSocketFrame], Option[ExecutionInfo])]): Stream[IO, (Option[WebSocketFrame], Option[Chart])] =
+    stream.collect { case (frameOp @ Some(_), _) => (frameOp, None) }
 
       
   private val dataToResponse: Pipe[IO, WebSocketFrame.Data[?], Either[io.circe.Error, JsonRpc]] = _

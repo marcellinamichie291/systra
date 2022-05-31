@@ -38,7 +38,7 @@ trait WebSocketStream extends LazyLogging:
   val configReconnectDelay: ConfigValue[Effect, FiniteDuration] = default(30.second)
 
   /** WebSocketFrameをChartに変換する処理を実装 */
-  def toChart(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, (WebSocketFrame, Option[Chart])]
+  def toChart(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, (Option[WebSocketFrame], Option[Chart])]
 
   /** WebSocket実行 */
   def apply(trade: Pipe[IO, Chart, Unit]): Kleisli[IO, Signal[IO, Boolean], Unit] = Kleisli { haltOnSignal =>
@@ -55,7 +55,8 @@ trait WebSocketStream extends LazyLogging:
                   uri:             Uri,
                   maxConnectCount: Int,
                   delay:           FiniteDuration): IO[Response[Unit]] = AsyncHttpClientFs2Backend
-    .resource[IO]().use { backend =>
+    .resource[IO]()
+    .use { backend =>
       basicRequest
         .response(asWebSocketStreamAlways(Fs2Streams[IO]) { websocket =>
           websocket
@@ -95,8 +96,9 @@ trait WebSocketStream extends LazyLogging:
     }
 
   /** WebSocketFrameを返す */
-  private def reply: Pipe[IO, (WebSocketFrame, Option[Chart]), WebSocketFrame] = _.map(_._1)
+  private def reply: Pipe[IO, (Option[WebSocketFrame], Option[Chart]), WebSocketFrame] = _
+    .collect { case (Some(frame), _) => frame }
 
   /** トレード実行 */
-  private def execute(trade: Pipe[IO, Chart, Unit]): Pipe[IO, (WebSocketFrame, Option[Chart]), WebSocketFrame] =
+  private def execute(trade: Pipe[IO, Chart, Unit]): Pipe[IO, (Option[WebSocketFrame], Option[Chart]), WebSocketFrame] =
     _.collect { case (_, Some(chart)) => chart }.through(trade).drain
