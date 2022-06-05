@@ -1,5 +1,12 @@
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.util._
+import com.github.imomushi8.systra.virtual._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
+import com.github.imomushi8.systra.virtual.VirtualContract._
+
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.action._
+import com.github.imomushi8.systra.core.market._
+import com.github.imomushi8.systra.core.entity._
 
 import org.scalacheck.{Arbitrary, Gen}
 import java.time.LocalDateTime

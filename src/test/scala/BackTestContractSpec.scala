@@ -1,8 +1,12 @@
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.backtest._
-import com.github.imomushi8.systra.backtest.{BackTest, BTMarket}
-import com.github.imomushi8.systra.util._
-import com.github.imomushi8.systra.report.PositionReport
+import com.github.imomushi8.systra.virtual._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
+import com.github.imomushi8.systra.virtual.VirtualContract._
+
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.action._
+import com.github.imomushi8.systra.core.market._
+import com.github.imomushi8.systra.core.entity._
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -28,50 +32,6 @@ class BackTestContractSpec
   implicit lazy val arbOrder: Arbitrary[Order] = Arbitrary(genOrder)
   implicit lazy val arbPosition: Arbitrary[Position] = Arbitrary(genPosition)
   implicit lazy val arbOrderMethod: Arbitrary[OrderMethod] = Arbitrary(genOrderMethod)
-
-  "checkAllContract(chart, orders, positions)" should "pass all tests for any arities" in forAll(genChart, Gen.listOf(genOrder), Gen.listOf(genPosition)) {
-    (chart: Chart, orders: List[Order], positions:List[Position]) =>
-      val (nextOrder, nextPositions, closed) = checkAllContract(chart, orders, positions)
-      for(order <- orders.filter(_.id.nonEmpty)) {
-        if isContracted(chart)(order) then
-          nextOrder should not contain (order)
-
-          if isSTOP_LIMIT(order) then
-            nextOrder should contain (order.invalidateTriggerPrice)
-          else
-            if order.isSettle then
-              nextPositions.map(_.id) should not contain (order.settlePositionId)
-              closed should contain allElementsOf (settle(chart, positions)(order))
-            else 
-              nextPositions should contain (createPosition(chart)(order))
-
-        else
-          nextOrder should contain (order)
-      }
-    }
-
-  "checkAllContract(chart, orders, positions)" should "pass all tests" in forAll(genMarketContext) {
-    case (chart, nonContractedOrders, contractedOrders, settledOrders, positions) => 
-      val orders = nonContractedOrders ++ contractedOrders ++ settledOrders
-      val (nextOrders, nextPositions, closed) = checkAllContract(chart, orders, positions)
-      
-      for(order <- orders.filter(_.id.nonEmpty)) {
-        if isContracted(chart)(order) then
-          nextOrders should not contain (order)
-
-          if isSTOP_LIMIT(order) then
-            nextOrders should contain (order.invalidateTriggerPrice)
-          else
-            if order.isSettle then
-              nextPositions.map(_.id) should not contain (order.settlePositionId)
-              closed should contain allElementsOf (settle(chart, positions)(order))
-            else 
-              nextPositions should contain (createPosition(chart)(order))
-
-        else
-          nextOrders should contain (order)
-      }
-  }
 
   "isSTOP_LIMIT(order)" should "pass all tests" in forAll { (order: Order) =>
     isSTOP_LIMIT(order) should equal (order.price > 0 && order.triggerPrice > 0)
@@ -106,29 +66,6 @@ class BackTestContractSpec
     val contractFlag = isContracted(chart)(order)
     
     contractFlag should equal (order.parentId == "" && (hasEvent || order.isMarket))
-  }
-
-  "convertOrder(nonContractedOrders)(contractedOrder)" should "pass all tests" in {
-    forAll(genChart, Gen.listOf(genOrder)) { (chart: Chart, orders: List[Order]) =>
-      forAll(genContracted(chart, orders)) { (contractedOrder: Order) =>
-        if contractedOrder.id.nonEmpty then
-          val nonContractedOrders = getNonContractedOrders(orders)(contractedOrder) 
-
-          val convertOrders = convertOrder(nonContractedOrders)(contractedOrder)
-            
-          if isSTOP_LIMIT(contractedOrder) then
-            convertOrders should contain (contractedOrder.invalidateTriggerPrice)
-          else
-            convertOrders should not contain (contractedOrder)
-            if nonContractedOrders.exists(_.parentId == contractedOrder.id) then
-              val filteredOrders = nonContractedOrders.filter(_.parentId == contractedOrder.id).map(_.invalidateParentId)
-              convertOrders should contain allElementsOf (filteredOrders)
-            
-            if nonContractedOrders.exists(_.brotherId == contractedOrder.id) then
-              val filteredOrders = nonContractedOrders.filter(_.brotherId == contractedOrder.id)
-              convertOrders should not contain allElementsOf (filteredOrders)
-      }
-    }
   }
 
 /*************************************************************************************************/
@@ -166,7 +103,7 @@ class BackTestContractSpec
 
 /*************************************************************************************************/
 
-  "makeReport" should "make PositionReport" in {
+  "makeReport" should "make PositionTransaction" in {
     val genClosed: Gen[List[(Position, Price, TimeStamp)]] = Gen.listOf {
       for
         position <- genPosition
@@ -178,11 +115,11 @@ class BackTestContractSpec
     forAll(genClosed) { (positions: List[(Position, Price, TimeStamp)]) =>
       val reports = makeReport(positions)
       reports.size should equal (positions.size)
-      reports.map(_.asInstanceOf[PositionReport].openPrice).toList should equal (positions.map(_._1.price))
-      reports.map(_.asInstanceOf[PositionReport].closePrice).toList should equal (positions.map(_._2))
-      reports.map(_.asInstanceOf[PositionReport].openTime).toList should equal (positions.map(_._1.openTime))
-      reports.map(_.asInstanceOf[PositionReport].closeTime).toList should equal (positions.map(_._3))
-      reports.map(_.asInstanceOf[PositionReport].side).toList should equal (positions.map(_._1.side))
-      reports.map(_.asInstanceOf[PositionReport].size).toList should equal (positions.map(_._1.size))
+      reports.map(_.asInstanceOf[PositionTransaction].openPrice).toList should equal (positions.map(_._1.price))
+      reports.map(_.asInstanceOf[PositionTransaction].closePrice).toList should equal (positions.map(_._2))
+      reports.map(_.asInstanceOf[PositionTransaction].openTime).toList should equal (positions.map(_._1.openTime))
+      reports.map(_.asInstanceOf[PositionTransaction].closeTime).toList should equal (positions.map(_._3))
+      reports.map(_.asInstanceOf[PositionTransaction].side).toList should equal (positions.map(_._1.side))
+      reports.map(_.asInstanceOf[PositionTransaction].size).toList should equal (positions.map(_._1.size))
     }
   }
