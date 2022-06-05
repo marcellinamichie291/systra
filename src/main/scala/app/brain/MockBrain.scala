@@ -10,6 +10,10 @@ import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.action._
 import com.github.imomushi8.systra.core.market._
 import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.entity.UnixTimeStamp._
+
+import math.Numeric.Implicits.infixNumericOps
+import math.Ordering.Implicits.infixOrderingOps
 
 object MockBrain:
   case class Memory(chartList: List[Chart])
@@ -30,7 +34,7 @@ object MockBrain:
         else Memory(memory.chartList :+ chart)
 
       val size = 100
-      val expire = chart.datetime.plusMonths(6)
+      val expire = chart.timestamp + 6.toMonth
 
       if context.positions.nonEmpty then
         val settlePosition = context.positions.head

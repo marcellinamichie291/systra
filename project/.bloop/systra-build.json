@@ -19,13 +19,17 @@
         "classpath": [
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\sbt\\1.6.1\\sbt-1.6.1.jar",
             "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-library.jar",
-            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.13\\sbt-bloop-1.4.13.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.5.0\\sbt-bloop-1.5.0.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-scalafix_2.12_1.0\\0.10.0\\sbt-scalafix-0.10.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\main_2.12\\1.6.1\\main_2.12-1.6.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\io_2.12\\1.6.0\\io_2.12-1.6.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\net\\java\\dev\\jna\\jna\\5.8.0\\jna-5.8.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\net\\java\\dev\\jna\\jna-platform\\5.8.0\\jna-platform-5.8.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\google\\code\\gson\\gson\\2.7\\gson-2.7.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\google\\code\\findbugs\\jsr305\\3.0.2\\jsr305-3.0.2.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\eclipse\\jgit\\org.eclipse.jgit\\5.13.0.202109080827-r\\org.eclipse.jgit-5.13.0.202109080827-r.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\scalafix-interfaces\\0.10.0\\scalafix-interfaces-0.10.0.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\io\\get-coursier\\interface\\1.0.7\\interface-1.0.7.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\logic_2.12\\1.6.1\\logic_2.12-1.6.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\actions_2.12\\1.6.1\\actions_2.12-1.6.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\main-settings_2.12\\1.6.1\\main-settings_2.12-1.6.1.jar",
@@ -47,6 +51,8 @@
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\compiler-interface\\1.6.0\\compiler-interface-1.6.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\zinc-compile_2.12\\1.6.0\\zinc-compile_2.12-1.6.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\swoval\\file-tree-views\\2.1.7\\file-tree-views-2.1.7.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\googlecode\\javaewah\\JavaEWAH\\1.1.12\\JavaEWAH-1.1.12.jar",
+            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\slf4j\\slf4j-api\\1.7.30\\slf4j-api-1.7.30.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\util-relation_2.12\\1.6.1\\util-relation_2.12-1.6.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\completion_2.12\\1.6.1\\completion_2.12-1.6.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\task-system_2.12\\1.6.1\\task-system_2.12-1.6.1.jar",
@@ -75,7 +81,6 @@
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\checkerframework\\checker-qual\\3.4.1\\checker-qual-3.4.1.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\google\\errorprone\\error_prone_annotations\\2.4.0\\error_prone_annotations-2.4.0.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-lang\\modules\\scala-collection-compat_2.12\\2.6.0\\scala-collection-compat_2.12-2.6.0.jar",
-            "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\slf4j\\slf4j-api\\1.7.26\\slf4j-api-1.7.26.jar",
             "C:\\Users\\monnh\\.sbt\\boot\\scala-2.12.15\\lib\\scala-compiler.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\jcraft\\jsch\\0.1.54\\jsch-0.1.54.jar",
             "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\eed3si9n\\gigahorse-okhttp_2.12\\0.5.0\\gigahorse-okhttp_2.12-0.5.0.jar",
@@ -150,8 +155,8 @@
                 "import _root_.sbt._",
                 "import _root_.sbt.Keys._",
                 "import _root_.sbt.nio.Keys._",
-                "import _root_.sbt.ScriptedPlugin.autoImport._, _root_.sbt.plugins.JUnitXmlReportPlugin.autoImport._, _root_.sbt.plugins.MiniDependencyTreePlugin.autoImport._, _root_.bloop.integrations.sbt.BloopPlugin.autoImport._",
-                "import _root_.sbt.plugins.IvyPlugin, _root_.sbt.plugins.JvmPlugin, _root_.sbt.plugins.CorePlugin, _root_.sbt.ScriptedPlugin, _root_.sbt.plugins.SbtPlugin, _root_.sbt.plugins.SemanticdbPlugin, _root_.sbt.plugins.JUnitXmlReportPlugin, _root_.sbt.plugins.Giter8TemplatePlugin, _root_.sbt.plugins.MiniDependencyTreePlugin, _root_.bloop.integrations.sbt.BloopPlugin"
+                "import _root_.sbt.ScriptedPlugin.autoImport._, _root_.sbt.plugins.JUnitXmlReportPlugin.autoImport._, _root_.sbt.plugins.MiniDependencyTreePlugin.autoImport._, _root_.bloop.integrations.sbt.BloopPlugin.autoImport._, _root_.scalafix.sbt.ScalafixPlugin.autoImport._, _root_.scalafix.sbt.ScalafixTestkitPlugin.autoImport._",
+                "import _root_.sbt.plugins.IvyPlugin, _root_.sbt.plugins.JvmPlugin, _root_.sbt.plugins.CorePlugin, _root_.sbt.ScriptedPlugin, _root_.sbt.plugins.SbtPlugin, _root_.sbt.plugins.SemanticdbPlugin, _root_.sbt.plugins.JUnitXmlReportPlugin, _root_.sbt.plugins.Giter8TemplatePlugin, _root_.sbt.plugins.MiniDependencyTreePlugin, _root_.bloop.integrations.sbt.BloopPlugin, _root_.scalafix.sbt.ScalafixPlugin, _root_.scalafix.sbt.ScalafixTestkitPlugin"
             ]
         },
         "test": {
@@ -215,17 +220,34 @@
                 {
                     "organization": "ch.epfl.scala",
                     "name": "sbt-bloop",
-                    "version": "1.4.13",
+                    "version": "1.5.0",
                     "configurations": "default",
                     "artifacts": [
                         {
                             "name": "sbt-bloop",
-                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.13\\sbt-bloop-1.4.13.jar"
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.5.0\\sbt-bloop-1.5.0.jar"
                         },
                         {
                             "name": "sbt-bloop",
                             "classifier": "sources",
-                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.4.13\\sbt-bloop-1.4.13-sources.jar"
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-bloop_2.12_1.0\\1.5.0\\sbt-bloop-1.5.0-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "ch.epfl.scala",
+                    "name": "sbt-scalafix",
+                    "version": "0.10.0",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "sbt-scalafix",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-scalafix_2.12_1.0\\0.10.0\\sbt-scalafix-0.10.0.jar"
+                        },
+                        {
+                            "name": "sbt-scalafix",
+                            "classifier": "sources",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\sbt-scalafix_2.12_1.0\\0.10.0\\sbt-scalafix-0.10.0-sources.jar"
                         }
                     ]
                 },
@@ -260,6 +282,91 @@
                             "name": "jsr305",
                             "classifier": "sources",
                             "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\google\\code\\findbugs\\jsr305\\3.0.2\\jsr305-3.0.2-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "org.eclipse.jgit",
+                    "name": "org.eclipse.jgit",
+                    "version": "5.13.0.202109080827-r",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "org.eclipse.jgit",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\eclipse\\jgit\\org.eclipse.jgit\\5.13.0.202109080827-r\\org.eclipse.jgit-5.13.0.202109080827-r.jar"
+                        },
+                        {
+                            "name": "org.eclipse.jgit",
+                            "classifier": "sources",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\eclipse\\jgit\\org.eclipse.jgit\\5.13.0.202109080827-r\\org.eclipse.jgit-5.13.0.202109080827-r-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "ch.epfl.scala",
+                    "name": "scalafix-interfaces",
+                    "version": "0.10.0",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "scalafix-interfaces",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\scalafix-interfaces\\0.10.0\\scalafix-interfaces-0.10.0.jar"
+                        },
+                        {
+                            "name": "scalafix-interfaces",
+                            "classifier": "sources",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\scala\\scalafix-interfaces\\0.10.0\\scalafix-interfaces-0.10.0-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "io.get-coursier",
+                    "name": "interface",
+                    "version": "1.0.7",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "interface",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\io\\get-coursier\\interface\\1.0.7\\interface-1.0.7.jar"
+                        },
+                        {
+                            "name": "interface",
+                            "classifier": "sources",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\io\\get-coursier\\interface\\1.0.7\\interface-1.0.7-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "com.googlecode.javaewah",
+                    "name": "JavaEWAH",
+                    "version": "1.1.12",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "JavaEWAH",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\googlecode\\javaewah\\JavaEWAH\\1.1.12\\JavaEWAH-1.1.12.jar"
+                        },
+                        {
+                            "name": "JavaEWAH",
+                            "classifier": "sources",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\com\\googlecode\\javaewah\\JavaEWAH\\1.1.12\\JavaEWAH-1.1.12-sources.jar"
+                        }
+                    ]
+                },
+                {
+                    "organization": "org.slf4j",
+                    "name": "slf4j-api",
+                    "version": "1.7.30",
+                    "configurations": "default",
+                    "artifacts": [
+                        {
+                            "name": "slf4j-api",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\slf4j\\slf4j-api\\1.7.30\\slf4j-api-1.7.30.jar"
+                        },
+                        {
+                            "name": "slf4j-api",
+                            "classifier": "sources",
+                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\slf4j\\slf4j-api\\1.7.30\\slf4j-api-1.7.30-sources.jar"
                         }
                     ]
                 },
@@ -1195,23 +1302,6 @@
                             "name": "scala-collection-compat_2.12",
                             "classifier": "sources",
                             "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-lang\\modules\\scala-collection-compat_2.12\\2.6.0\\scala-collection-compat_2.12-2.6.0-sources.jar"
-                        }
-                    ]
-                },
-                {
-                    "organization": "org.slf4j",
-                    "name": "slf4j-api",
-                    "version": "1.7.26",
-                    "configurations": "default",
-                    "artifacts": [
-                        {
-                            "name": "slf4j-api",
-                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\slf4j\\slf4j-api\\1.7.26\\slf4j-api-1.7.26.jar"
-                        },
-                        {
-                            "name": "slf4j-api",
-                            "classifier": "sources",
-                            "path": "C:\\Users\\monnh\\AppData\\Local\\Coursier\\Cache\\v1\\https\\repo1.maven.org\\maven2\\org\\slf4j\\slf4j-api\\1.7.26\\slf4j-api-1.7.26-sources.jar"
                         }
                     ]
                 },

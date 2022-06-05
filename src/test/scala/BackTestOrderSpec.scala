@@ -1,14 +1,14 @@
 import app.brain.MockBrain
-import com.github.imomushi8.systra.backtest._
-import com.github.imomushi8.systra.backtest.BackTestOrder._
-import com.github.imomushi8.systra.backtest.BackTestPosition._
-import com.github.imomushi8.systra.backtest.BackTestContract._
+import com.github.imomushi8.systra.virtual._
+import com.github.imomushi8.systra.virtual.VirtualMarket._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
+import com.github.imomushi8.systra.virtual.VirtualContract._
 
 import com.github.imomushi8.systra.core.util._
 import com.github.imomushi8.systra.core.action._
 import com.github.imomushi8.systra.core.market._
 import com.github.imomushi8.systra.core.entity._
-import com.github.imomushi8.systra.backtest.BTMarket._
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -40,7 +40,7 @@ class BackTestOrderSpec
     (charts, contractedOrders >>= getNonContractedOrders(orders), contractedOrders, settledOrders, positions)
 
   val memory = Monoid[MockBrain.Memory].empty
-  val brain = MockBrain[BTMarket](2)
+  val brain = MockBrain[VirtualMarket](2)
 /*
   "checkAllContract(chart, orders, positions)" should "pass all tests for any arities" in forAll(genTradeInfo) {
     case (charts, nonContractedOrders, contractedOrders, settledOrders, positions) => 
