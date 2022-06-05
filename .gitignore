@@ -1,12 +1,19 @@
-.scalafmt.conf
 /.bloop/
-/target/
+/.bsp/
 /.metals/
 /.vscode/
 /.idea/
 /null/
+/target/
+/project/*
+!/project/Dependencies.scala
+!/project/build.properties
+!/project/plugins.sbt
 
 /logs/
-/csv_chart/
 /reports/
+/csv_chart/
 logback.xml
+
+.scalafmt.conf
+.scalafix.conf

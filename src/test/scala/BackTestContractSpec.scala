@@ -1,8 +1,12 @@
-import com.github.imomushi8.systra._
-import com.github.imomushi8.systra.backtest._
-import com.github.imomushi8.systra.util._
-import com.github.imomushi8.systra.entity._
-import com.github.imomushi8.systra.report.PositionReport
+import com.github.imomushi8.systra.virtual._
+import com.github.imomushi8.systra.virtual.VirtualOrder._
+import com.github.imomushi8.systra.virtual.VirtualPosition._
+import com.github.imomushi8.systra.virtual.VirtualContract._
+
+import com.github.imomushi8.systra.core.util._
+import com.github.imomushi8.systra.core.action._
+import com.github.imomushi8.systra.core.market._
+import com.github.imomushi8.systra.core.entity._
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -99,7 +103,7 @@ class BackTestContractSpec
 
 /*************************************************************************************************/
 
-  "makeReport" should "make PositionReport" in {
+  "makeReport" should "make PositionTransaction" in {
     val genClosed: Gen[List[(Position, Price, TimeStamp)]] = Gen.listOf {
       for
         position <- genPosition
@@ -111,11 +115,11 @@ class BackTestContractSpec
     forAll(genClosed) { (positions: List[(Position, Price, TimeStamp)]) =>
       val reports = makeReport(positions)
       reports.size should equal (positions.size)
-      reports.map(_.asInstanceOf[PositionReport].openPrice).toList should equal (positions.map(_._1.price))
-      reports.map(_.asInstanceOf[PositionReport].closePrice).toList should equal (positions.map(_._2))
-      reports.map(_.asInstanceOf[PositionReport].openTime).toList should equal (positions.map(_._1.openTime))
-      reports.map(_.asInstanceOf[PositionReport].closeTime).toList should equal (positions.map(_._3))
-      reports.map(_.asInstanceOf[PositionReport].side).toList should equal (positions.map(_._1.side))
-      reports.map(_.asInstanceOf[PositionReport].size).toList should equal (positions.map(_._1.size))
+      reports.map(_.asInstanceOf[PositionTransaction].openPrice).toList should equal (positions.map(_._1.price))
+      reports.map(_.asInstanceOf[PositionTransaction].closePrice).toList should equal (positions.map(_._2))
+      reports.map(_.asInstanceOf[PositionTransaction].openTime).toList should equal (positions.map(_._1.openTime))
+      reports.map(_.asInstanceOf[PositionTransaction].closeTime).toList should equal (positions.map(_._3))
+      reports.map(_.asInstanceOf[PositionTransaction].side).toList should equal (positions.map(_._1.side))
+      reports.map(_.asInstanceOf[PositionTransaction].size).toList should equal (positions.map(_._1.size))
     }
   }
