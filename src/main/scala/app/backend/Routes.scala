@@ -4,6 +4,9 @@ import app.demo.Demo
 import app.model.AppStatus
 import app.model.service._
 
+import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.entity.UnixTimeStamp._
+
 import cats.effect._
 import cats.syntax.all._
 
@@ -16,6 +19,7 @@ import org.http4s.server.Router
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.dsl.impl.QueryParamDecoderMatcher
+import concurrent.duration.DurationInt
 
 /**
  * ルーティング
@@ -38,7 +42,7 @@ object Routes:
     /* バックテスト開始 */
     case GET -> Root / "start" / "backtest" =>
       // このへんのパラメータもあとで取得する
-      val service = new BackTestService[app.Envs.M](brains, capital, readCsv, writeCsv)
+      val service = new BackTestService[app.Envs.M](brains, capital, 60L.toMinute, readCsv, writeCsv)
 
       for
         isIdled   <- signal.get.map { _.isIdled }
@@ -51,12 +55,10 @@ object Routes:
     /* デモ取引開始 */
     case GET -> Root / "start" / "demotrade" =>
       // このへんのパラメータもあとで取得する
-      val wsFactory = new WebSocketFactory(java.time.Duration.ofMinutes(1L))
-
       for
-        ws        <- wsFactory.get("bitflyer_btc")
+        ws        <- WebSocketFactory.get("bitflyer_btc")
         isIdled   <- signal.get.map { _.isIdled }
-        isUpdated <- signal.tryUpdate { _.run(new DemoTradeService(brains, capital, ws)) }
+        isUpdated <- signal.tryUpdate { _.run(new DemoTradeService(brains, capital, 5L.toMinute, ws)) }
         res       <- if isIdled && isUpdated then Ok("Start DemoTrade")
                      else if !isUpdated then BadRequest("Start DemoTrade failed")
                      else BadRequest("It is not Idled")

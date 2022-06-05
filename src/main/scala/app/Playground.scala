@@ -5,67 +5,68 @@ import app.backend._
 import app.model._
 import app.model.service._
 
-import cats.implicits._
+import com.github.imomushi8.systra.core.entity._
+import com.github.imomushi8.systra.core.entity.UnixTimeStamp._
+
+import cats._
+import cats.implicits.{catsSyntaxFlatMapOps, catsSyntaxSemigroup}
 import cats.effect._
-import cats.effect.unsafe.implicits.global
 
 import fs2._
+import fs2.timeseries.{TimeStamped, TimeSeries}
 import fs2.concurrent.{Topic, SignallingRef}
 import fs2.concurrent.Topic.Closed
+
 import com.comcast.ip4s._
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.duration.FiniteDuration
-import collection.JavaConverters._
+import scala.concurrent.duration.{DurationInt, FiniteDuration} 
 
 import java.util.Locale
-import java.io.File
-import java.io.FileWriter
-import java.io.FileInputStream
+import java.io.{File, FileWriter, FileInputStream}
+import collection.JavaConverters._
 
 object Playground extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] = test
-    .as(ExitCode.Success)
-  
-  import fs2.{Stream, Chunk, Scan}
-  import fs2.timeseries.{TimeStamped, TimeSeries}
-  import cats.effect.{Ref, Temporal}
-  import scodec.bits.ByteVector
-  import scala.collection.immutable.Queue
-  import scala.concurrent.duration._
+    .as(ExitCode.Success)  
 
   def test = Stream
-    .fixedDelay[IO](300.milli)
+    .fixedDelay[IO](5.second)
     .zipRight(Stream.range(1, 10).repeat)
-    .through(measureAverageBitrate)
-    //.printlns
+    //.map(_=> System.currentTimeMillis)
+    .through(aggregateTicker(5.second))
+    .evalMap { case TimeStamped(time, data) =>
+      IO.println(s"Time: ${time.toMillis.toTimeStamp.show()}, data: ${data}") 
+    }
     .compile
     .drain
 
-  def averageBitrate = TimeStamped
-    .withRate[Option[Int], Seq[Int]](3.second)(_.map{ i=>Seq(i) }.getOrElse(Nil))
-    /*.andThen(Scan.stateful1(Queue.empty[Int]) {
-      case (q, tsv @ TimeStamped(_, Right(_))) => (q, tsv)
-      case (q, TimeStamped(t, Left(seq))) =>
-        println(s"QUEUE: $q")
-        println(s"SEQ: $seq")
-        (q, TimeStamped(t, Left((seq))))// ++ q))))//.take(20))))
-    })*/
+  def aggregateTicker[N: Semigroup](period: FiniteDuration)(input: Stream[IO, N]) =
+    val aggregateInterval = TimeStamped
+      .rate[Option[N], Seq[N]](period)(Vector.from)
+      .toPipe[IO]
 
-  def measureAverageBitrate[F[_]: Temporal](input: Stream[F, Int]): Stream[F, Int] =
-    TimeSeries.timePulled(input, 0.second, 3.second)
-      .through(averageBitrate.toPipe)
-      .flatMap {
-        case TimeStamped(_, Left(bitrate)) => 
-          println(s"LEFT: $bitrate")
-          Stream.empty
-        case TimeStamped(_, Right(Some(bytes))) => 
-          //println(s"RIGHT: $bytes")
-          Stream.empty
-        case TimeStamped(_, Right(None)) => Stream.empty
+    val ticker = Stream
+      .fixedDelay[IO](period)
+      .evalMap(_ => TimeStamped.now[IO, Option[N]](None))
+
+    val stream = input
+      .evalMap(TimeStamped.now[IO, N])
+      .map(tsa => tsa.map(Some(_): Option[N]))
+      .merge(ticker)
+      .through(aggregateInterval)
+      .dropWhile(_.value.isEmpty)
+
+    stream
+      .head
+      .flatMap { first => stream
+        .evalScan(first) {
+          case (prev, TimeStamped(_, Nil)) => TimeStamped.now[IO, Seq[N]](prev.value)
+          case (_, stamped)                => IO(stamped)
+        }
+        .map { ts => ts.map(_.reduceLeft(_|+|_)) }
       }
-    
+
     
   def retryTest = Stream[IO, Int](1, 2, 3, 4)
     .append(Stream.raiseError[IO](new RuntimeException("This is error")))

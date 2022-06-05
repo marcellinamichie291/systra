@@ -6,6 +6,7 @@ import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.core.action.Brain
 import com.github.imomushi8.systra.core.market.{Tradable, OK, TradeState}
 
+import cats.data.Kleisli
 import cats.effect.IO
 import fs2.{Stream, Pipe}
 
@@ -23,9 +24,7 @@ import app.model.AppStatus
 import app.model.service.Service
 import fs2.concurrent.Signal
 
-import concurrent.duration.DurationInt
-import scala.concurrent.duration.FiniteDuration
-import cats.data.Kleisli
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 trait WebSocketStream extends LazyLogging:
   /** WebSocketの接続URIをciris.ConfigValueで渡す */
@@ -38,30 +37,33 @@ trait WebSocketStream extends LazyLogging:
   val configReconnectDelay: ConfigValue[Effect, FiniteDuration] = default(30.second)
 
   /** WebSocketFrameをChartに変換する処理を実装 */
-  def toChart(websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, (Option[WebSocketFrame], Option[Chart])]
+  def toChart(period: FiniteDuration)
+             (websocket: Stream[IO, WebSocketFrame.Data[?]]): Stream[IO, (Option[WebSocketFrame], Option[Chart])]
 
   /** WebSocket実行 */
-  def apply(trade: Pipe[IO, Chart, Unit]): Kleisli[IO, Signal[IO, Boolean], Unit] = Kleisli { haltOnSignal =>
+  def apply(period: TimeStamp, 
+            trade:  Pipe[IO, Chart, Unit]): Kleisli[IO, Signal[IO, Boolean], Unit] = Kleisli { haltOnSignal =>
     for
+      reconnectDelay  <- configReconnectDelay.load[IO]
       uri             <- configUri.load[IO]
       maxConnectCount <- configMaxConnectCount.load[IO]
-      delay           <- configReconnectDelay.load[IO]
-      ?               <- run(trade, haltOnSignal, uri, maxConnectCount, delay)
+      ?               <- run(period.toDuration, reconnectDelay, uri, maxConnectCount, trade, haltOnSignal)
     yield ()
   }
 
-  private def run(trade:           Pipe[IO, Chart, Unit],
-                  haltOnSignal:    Signal[IO, Boolean],
+  private def run(period:          FiniteDuration,
+                  reconnectDelay:  FiniteDuration,
                   uri:             Uri,
                   maxConnectCount: Int,
-                  delay:           FiniteDuration): IO[Response[Unit]] = AsyncHttpClientFs2Backend
+                  trade:           Pipe[IO, Chart, Unit],
+                  haltOnSignal:    Signal[IO, Boolean]): IO[Response[Unit]] = AsyncHttpClientFs2Backend
     .resource[IO]()
     .use { backend =>
       basicRequest
         .response(asWebSocketStreamAlways(Fs2Streams[IO]) { websocket =>
           websocket
-            .through(toChart)                              // Chartに変換する
-            .through(retryConnect(maxConnectCount, delay)) // 再接続が必要な場合は再接続する
+            .through(toChart(period))                               // Chartに変換する
+            .through(retryConnect(maxConnectCount, reconnectDelay)) // 再接続が必要な場合は再接続する
             .broadcastThrough(
               reply,         // WebSocketFrameの返答
               execute(trade) // トレード実行
@@ -79,7 +81,7 @@ trait WebSocketStream extends LazyLogging:
 
   /** 規定回数だけ再接続を行う */
   private def retryConnect[I](maxConnectCount: Int, 
-                              delay: FiniteDuration): Pipe[IO, I, I] = _
+                              delay:           FiniteDuration): Pipe[IO, I, I] = _
     .attempts(Stream.constant[IO, FiniteDuration](delay)) // 失敗したらdelay秒後に繰り返し
     .zipWithScan1(1) {
       case (connectCnt, Left(_))  => connectCnt + 1

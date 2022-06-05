@@ -18,10 +18,8 @@ import cats.implicits._
 import cats.effect._
 
 import fs2._
-import fs2.concurrent.SignallingRef
-import sttp.client3.Response
 
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration._
 import java.time.temporal.TemporalAmount
 import com.github.imomushi8.systra.chart.WebSocketStream
 import app.model.AppStatus
@@ -30,10 +28,12 @@ import fs2.concurrent.Signal
 
 class DemoTradeService[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])], 
                                         firstCapital: Price,
+                                        period:       TimeStamp,
                                         ws:           WebSocketStream) extends Service with LazyLogging:
   override def getApp: Kleisli[IO, StatusRef[Service], Unit] = Kleisli { status => 
-    val trade: Pipe[IO, Chart, Unit] = _.through(Demo(brains, firstCapital))
-    begin(ws(trade), status).end() 
+    val trade: Pipe[IO, Chart, Unit] = Demo(brains, firstCapital)
+    
+    begin(ws(period, trade), status).end()
   }
 
   /** 開始メソッド */

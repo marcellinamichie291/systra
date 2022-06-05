@@ -8,17 +8,16 @@ import app.bitflyer.BitFlyerWS
 
 import cats.effect._
 import fs2._
-import java.time.temporal.TemporalAmount
+import scala.concurrent.duration.FiniteDuration
 
-class WebSocketFactory(period: TemporalAmount):
+object WebSocketFactory:
 
   def get(marketName: String): IO[WebSocketStream] = marketName match
     case "bitflyer_btc" => bitflyer_btc
-    case _ => ???
+    case _              => ??? // FIXME
 
   def bitflyer_btc = for
-    apiKey <- BITFLYER_API_KEY.load[IO]
+    apiKey    <- BITFLYER_API_KEY.load[IO]
     apiSecret <- BITFLYER_API_SECRET.load[IO]
-    channel <- BITFLYER_PUBLIC_CHANNEL.load[IO]
-  yield 
-    BitFlyerWS(apiKey.value, apiSecret.value, channel, period)
+    channel   <- BITFLYER_PUBLIC_CHANNEL.load[IO]
+  yield BitFlyerWS(apiKey.value, apiSecret.value, channel)

@@ -3,7 +3,7 @@ package com.github.imomushi8.systra.core.entity
 import java.util.Date
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZonedDateTime}
-
+import scala.concurrent.duration.{DurationLong, FiniteDuration}
 
 opaque type UnixTimeStamp = Long
 
@@ -27,34 +27,30 @@ object UnixTimeStamp:
   def now: UnixTimeStamp = System.currentTimeMillis
 
   extension (x: UnixTimeStamp) {
+    def toLong: Long = x
+
+    def toDuration: FiniteDuration = x.millis
+
     /** 時刻表示を行う */
     def show(formatter: String = DEFAULT_FORMATTER): String = formatter format Date(x)
   }
 
   extension (x: Long) {
+
     /** 時刻表示を行う */
     def showDateTime(formatter: String = DEFAULT_FORMATTER): String = formatter format Date(x)
+
     def toTimeStamp: UnixTimeStamp = x
-    def toSecond: UnixTimeStamp = x*SECOND
-    def toHour: UnixTimeStamp = x*HOUR
-    def toDay: UnixTimeStamp = x*DAY
+    def toSecond: UnixTimeStamp    = x * SECOND
+    def toMinute: UnixTimeStamp    = x * MINUTE
+    def toHour: UnixTimeStamp      = x * HOUR
+    def toDay: UnixTimeStamp       = x * DAY
+
     /** 30日 */
-    def toMonth: UnixTimeStamp = x*MONTH
+    def toMonth: UnixTimeStamp = x * MONTH
+
     /** 365日 */
-    def toYear: UnixTimeStamp = x*YEAR
+    def toYear: UnixTimeStamp = x * YEAR
   }
 
   implicit val numeric: Numeric[UnixTimeStamp] = Numeric[Long]
-
-  /*new Numeric {
-    def plus(x: UnixTimeStamp, y: UnixTimeStamp): UnixTimeStamp = x + y
-    def minus(x: UnixTimeStamp, y: UnixTimeStamp): UnixTimeStamp = x - y
-    def times(x: UnixTimeStamp, y: UnixTimeStamp): UnixTimeStamp = x * y
-    def negate(x: UnixTimeStamp): UnixTimeStamp = -x
-    def toInt(x: UnixTimeStamp): Int  = x.toInt
-    def toLong(x: UnixTimeStamp): Long = x
-    def toFloat(x: UnixTimeStamp): Float = x.toFloat
-    def toDouble(x: UnixTimeStamp): Double = x.toDouble
-    def fromInt(x: Int): UnixTimeStamp = x.toLong
-    def compare(x: UnixTimeStamp, y: UnixTimeStamp): Int = x compare y
-  }*/

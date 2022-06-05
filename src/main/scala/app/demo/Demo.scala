@@ -23,8 +23,12 @@ object Demo extends Tradable[VirtualMarket]:
                              firstCapital: Price): Pipe[IO, Chart, Unit] = chartStream =>
     chartStream
       .head
-      .flatMap { head => 
+      .flatMap { head =>
+        given initMarket: Initial[VirtualMarket] = VirtualMarket.initial(firstCapital, head)
+        lazy val pipes = brains.map { brain => trade(brain._2) }
+
         chartStream
-          .through(_.printlns)
-          .drain 
+          .printlns
+          //.broadcastThrough(pipes:_*)
+          .drain
       }

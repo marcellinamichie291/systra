@@ -41,12 +41,13 @@ import java.time.ZonedDateTime
 
 class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualMarket, Memory])], 
                                        firstCapital: Price,
+                                       period:       TimeStamp,
                                        readCsvPath:  String,
                                        writeCsvPath: String)
-                                      (using clock:  Clock[IO]) extends Service with LazyLogging {
+                                      (using clock:  Clock[IO]) extends Service with LazyLogging:
   given IttoCSVFormat = IttoCSVFormat.default
   given FieldEncoder[SummarySubReport] = customFieldEncoder[SummarySubReport](_.toString)
-  val csvDatetimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")                                 
+  val csvDatetimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")        
 
   override def getApp: Kleisli[IO, StatusRef[Service], Unit] = Kleisli { status =>
     for
@@ -62,7 +63,7 @@ class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualM
       val timestamp = UnixTimeStamp.parse(s"${csv.dateStr} ${csv.timeStr}", csvDatetimeFormatter)
         Chart(csv.open, csv.high, csv.low, csv.close, csv.volume, timestamp)
     }
-    .downSampling(UnixTimeStamp(0))
+    .downSampling(period)
     .end(writeCsvPath)
     .handleError { t => t.printStackTrace }
 
@@ -90,5 +91,4 @@ class BackTestService[Memory: Initial](brains:       Seq[(String, Brain[VirtualM
       .through(Files[IO].writeAll(Path(writeCsvPath)))
       .compile
       .drain
-      .>> { IO.println(s"Done Write CSV: $writeCsvPath") } 
-}
+      .>> { IO.println(s"Done Write CSV: $writeCsvPath") }

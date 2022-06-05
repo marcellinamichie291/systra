@@ -2,7 +2,7 @@ package app.model.service
 
 import com.github.imomushi8.systra.virtual._
 import com.github.imomushi8.systra.core.util._
-import com.github.imomushi8.systra.core.entity.Chart
+import com.github.imomushi8.systra.core.entity._
 import com.github.imomushi8.systra.virtual.VirtualMarket._
 
 import app.Envs._
@@ -23,6 +23,9 @@ import scala.concurrent.duration.DurationInt
 import java.time.temporal.TemporalAmount
 import com.github.imomushi8.systra.chart.WebSocketStream
 import app.model.AppStatus
+import fs2.timeseries.TimeStamped
 
 class RealTradeService(ws: WebSocketStream) extends Service:
-  override def getApp: Kleisli[IO, StatusRef[Service], Unit] = Kleisli { signal => ??? }
+  override def getApp: Kleisli[IO, StatusRef[Service], Unit] = Kleisli { status =>  
+    ??? 
+  }
